@@ -3,6 +3,34 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSimStore } from '@/store/simStore';
 
+const KIIT_TEETH = [
+  { x1: 51, y1: 30, x2: 57, y2: 30 },
+  { x1: 48.19, y1: 39.47, x2: 53.39, y2: 42.5 },
+  { x1: 39.47, y1: 48.19, x2: 42.5, y2: 53.39 },
+  { x1: 30, y1: 51, x2: 30, y2: 57 },
+  { x1: 20.53, y1: 48.19, x2: 17.5, y2: 53.39 },
+  { x1: 11.81, y1: 39.47, x2: 6.61, y2: 42.5 },
+  { x1: 9, y1: 30, x2: 3, y2: 30 },
+  { x1: 11.81, y1: 20.53, x2: 6.61, y2: 17.5 },
+  { x1: 20.53, y1: 11.81, x2: 17.5, y2: 6.61 },
+  { x1: 30, y1: 9, x2: 30, y2: 3 },
+  { x1: 39.47, y1: 11.81, x2: 42.5, y2: 6.61 },
+  { x1: 48.19, y1: 20.53, x2: 53.39, y2: 17.5 },
+];
+
+function KiitLogoSmall() {
+  return (
+    <svg width="36" height="36" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" suppressHydrationWarning>
+      <circle cx="30" cy="30" r="28" fill="white" stroke="#1a7a2e" strokeWidth="1.5" />
+      {KIIT_TEETH.map((t, i) => (
+        <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#1a7a2e" strokeWidth="3.5" strokeLinecap="round" />
+      ))}
+      <circle cx="30" cy="30" r="18" fill="#1a7a2e" />
+      <circle cx="30" cy="30" r="6" fill="white" />
+    </svg>
+  );
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const setCredentials = useSimStore((s) => s.setCredentials);
@@ -27,97 +55,188 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center bg-gray-300 p-4"
-      style={{ fontFamily: 'Arial, sans-serif' }}
+      className="min-h-screen flex items-center justify-center"
+      style={{ background: '#d4d0cb', fontFamily: 'Arial, sans-serif', padding: '2rem' }}
     >
+      {/* Outer amber/gold frame */}
       <div
-        className="bg-white rounded-lg max-w-2xl w-full overflow-hidden"
-        style={{ border: '4px solid #c8960c', boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}
+        style={{
+          border: '5px solid #c8960c',
+          borderRadius: 6,
+          background: 'white',
+          width: '100%',
+          maxWidth: 680,
+          overflow: 'hidden',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+        }}
       >
-        <div className="flex flex-col md:flex-row min-h-[400px]">
-          {/* Left: image placeholder */}
+        {/* Top section: image + form side by side */}
+        <div className="flex" style={{ minHeight: 380 }}>
+          {/* Left: campus photo placeholder */}
           <div
-            className="w-full md:w-1/2 flex items-center justify-center p-6 min-h-[200px]"
-            style={{ background: 'linear-gradient(135deg, #1a5c2e 0%, #2d8a4e 50%, #1a7a3a 100%)' }}
+            style={{
+              width: '44%',
+              background: 'linear-gradient(180deg, #6aaa5a 0%, #4a8c3a 30%, #3a7030 55%, #2a5820 75%, #1a4010 100%)',
+              position: 'relative',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              padding: '1rem',
+            }}
           >
-            <div className="text-center text-white">
-              <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg width="60" height="60" viewBox="0 0 100 100" fill="none">
-                  <circle cx="50" cy="50" r="40" fill="white" stroke="#00b050" strokeWidth="4" />
-                  <path d="M50 15L60 30H40L50 15Z" fill="#00b050" />
-                  <path d="M85 50L70 40V60L85 50Z" fill="#00b050" />
-                  <path d="M50 85L40 70H60L50 85Z" fill="#00b050" />
-                  <path d="M15 50L30 60V40L15 50Z" fill="#00b050" />
-                  <text x="50" y="55" fontFamily="Arial" fontSize="20" fontWeight="bold" fill="#00b050" textAnchor="middle">KIIT</text>
-                </svg>
-              </div>
-              <p className="font-bold text-lg">KIIT University</p>
-              <p className="text-sm text-white/80">Bhubaneswar, Odisha</p>
-              <p className="text-xs text-white/60 mt-2">Campus Portal</p>
+            {/* Building silhouette */}
+            <svg viewBox="0 0 200 140" style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', opacity: 0.35 }}>
+              <rect x="60" y="50" width="80" height="90" fill="white" />
+              <rect x="40" y="70" width="30" height="70" fill="white" />
+              <rect x="130" y="70" width="30" height="70" fill="white" />
+              <rect x="80" y="20" width="40" height="35" fill="white" />
+              <rect x="90" y="0" width="20" height="24" fill="white" />
+              {[65,80,95,110,125].map((x) => (
+                <rect key={x} x={x} y="70" width="12" height="18" fill="#3a7030" />
+              ))}
+              {[65,80,95,110,125].map((x) => (
+                <rect key={x+'b'} x={x} y="100" width="12" height="40" fill="#3a7030" />
+              ))}
+            </svg>
+            {/* Trees */}
+            <div style={{ position: 'relative', zIndex: 1, display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+              {[28,36,30,38,26].map((h, i) => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ width: h, height: h * 1.4, background: 'rgba(20,90,20,0.7)', borderRadius: '50% 50% 20% 20%' }} />
+                  <div style={{ width: 4, height: 12, background: 'rgba(80,50,20,0.6)' }} />
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Right: login form */}
-          <div className="w-full md:w-1/2 p-8 flex flex-col justify-between">
+          <div
+            style={{
+              width: '56%',
+              padding: '2rem 2rem 1.5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+            }}
+          >
             <div>
-              <h2 className="text-xl font-bold text-green-700 mb-1">Welcome to KIIT World</h2>
-              <p className="text-xs font-bold text-black mb-6 leading-snug">
-                INDIA&apos;s first university to implement SAP in all its schools and processes at a time
+              <h2
+                style={{
+                  color: '#1a7a2e',
+                  fontWeight: 'bold',
+                  fontSize: '1.15rem',
+                  marginBottom: '0.4rem',
+                }}
+              >
+                Welcome to KIIT World
+              </h2>
+              <p
+                style={{
+                  fontWeight: 'bold',
+                  fontSize: '0.78rem',
+                  color: '#111',
+                  lineHeight: 1.45,
+                  marginBottom: '1.5rem',
+                }}
+              >
+                INDIA&apos;s first university to implement SAP<br />
+                in all its schools and processes at a time
               </p>
 
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label className="text-xs font-bold text-gray-700 block mb-1">
-                    User <span className="text-red-500">*</span>
+              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#222', minWidth: 64 }}>
+                    User <span style={{ color: 'red' }}>*</span>
                   </label>
                   <input
                     type="text"
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
                     placeholder="e.g. 2405900"
-                    className="w-full border border-gray-400 px-3 py-2 text-sm rounded-sm focus:outline-none focus:border-blue-500"
+                    style={{
+                      border: '1px solid #aaa',
+                      padding: '4px 8px',
+                      fontSize: '0.85rem',
+                      width: '100%',
+                      outline: 'none',
+                    }}
                     autoComplete="username"
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-700 block mb-1">
-                    Password <span className="text-red-500">*</span>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#222', minWidth: 70, whiteSpace: 'nowrap' }}>
+                    Password <span style={{ color: 'red' }}>*</span>
                   </label>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full border border-gray-400 px-3 py-2 text-sm rounded-sm focus:outline-none focus:border-blue-500"
+                    style={{
+                      border: '1px solid #aaa',
+                      padding: '4px 8px',
+                      fontSize: '0.85rem',
+                      width: '100%',
+                      outline: 'none',
+                    }}
                     autoComplete="current-password"
                   />
                 </div>
 
                 {error && (
-                  <p className="text-xs text-red-600 font-semibold">{error}</p>
+                  <p style={{ fontSize: '0.75rem', color: '#cc0000', fontWeight: 600 }}>{error}</p>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="border border-gray-400 bg-gradient-to-b from-[#f5f5f5] to-[#e0e0e0] text-gray-700 text-sm px-6 py-2 rounded-sm hover:from-white hover:to-[#d0d0d0] transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Logging in...' : 'Log On'}
-                </button>
+                <div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    style={{
+                      background: 'linear-gradient(to bottom, #f5f5f5, #ddd)',
+                      border: '1px solid #aaa',
+                      padding: '4px 20px',
+                      fontSize: '0.85rem',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      color: '#222',
+                    }}
+                  >
+                    {loading ? 'Logging in...' : 'Log On'}
+                  </button>
+                </div>
               </form>
-
-              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
-                ⚠️ This is a practice simulator. Credentials are not verified or stored.
-              </div>
             </div>
 
-            <div className="mt-6 flex justify-between items-end">
-              <p className="text-[10px] text-gray-400">Copyright © SAP AG. All Rights Reserved.</p>
-              <div className="bg-[#1a3a6b] w-12 h-8 flex items-center justify-center rounded">
-                <span className="text-white font-bold text-xs">KIIT</span>
-              </div>
+            {/* Footer inside right panel */}
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <p style={{ fontSize: '0.65rem', color: '#888' }}>Copyright &copy; SAP AG. All Rights Reserved.</p>
+              <KiitLogoSmall />
             </div>
           </div>
+        </div>
+
+        {/* Bottom gold arch decoration */}
+        <div
+          style={{
+            height: 28,
+            background: 'linear-gradient(to right, #c8960c, #e8b830, #c8960c)',
+            borderRadius: '0 0 0 0',
+            position: 'relative',
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
+          {/* Center arch bump */}
+          <div
+            style={{
+              position: 'absolute',
+              top: -18,
+              width: 100,
+              height: 36,
+              background: 'linear-gradient(to bottom, #e8b830, #c8960c)',
+              borderRadius: '50% 50% 0 0',
+            }}
+          />
         </div>
       </div>
     </div>
