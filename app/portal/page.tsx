@@ -15,17 +15,12 @@ export default function PortalPage() {
           {/* Campus image */}
           <div className="flex justify-center mb-6">
             <div className="border border-gray-300 p-1 bg-white inline-block shadow-sm">
-              <div
-                className="flex items-center justify-center"
-                style={{
-                  width: 500,
-                  height: 100,
-                  background: 'linear-gradient(135deg, #4a90d9 0%, #87bfee 40%, #c4d7ec 70%, #5b8ec4 100%)',
-                  maxWidth: '100%',
-                }}
-              >
-                <span className="text-white/60 text-sm font-semibold">KIIT University Campus</span>
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/ESSWelcome.jpg"
+                alt="KIIT University Campus"
+                style={{ width: 500, height: 100, objectFit: 'cover', display: 'block', maxWidth: '100%' }}
+              />
             </div>
           </div>
 

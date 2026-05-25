@@ -1,40 +1,13 @@
 import Link from 'next/link';
 
-const GEAR_TEETH = [
-  { x1: 51, y1: 30, x2: 57, y2: 30 },
-  { x1: 48.19, y1: 39.47, x2: 53.39, y2: 42.5 },
-  { x1: 39.47, y1: 48.19, x2: 42.5, y2: 53.39 },
-  { x1: 30, y1: 51, x2: 30, y2: 57 },
-  { x1: 20.53, y1: 48.19, x2: 17.5, y2: 53.39 },
-  { x1: 11.81, y1: 39.47, x2: 6.61, y2: 42.5 },
-  { x1: 9, y1: 30, x2: 3, y2: 30 },
-  { x1: 11.81, y1: 20.53, x2: 6.61, y2: 17.5 },
-  { x1: 20.53, y1: 11.81, x2: 17.5, y2: 6.61 },
-  { x1: 30, y1: 9, x2: 30, y2: 3 },
-  { x1: 39.47, y1: 11.81, x2: 42.5, y2: 6.61 },
-  { x1: 48.19, y1: 20.53, x2: 53.39, y2: 17.5 },
-];
-
-function KiitGearLogo() {
-  return (
-    <svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="30" cy="30" r="28" fill="white" stroke="#1a7a2e" strokeWidth="1.5" />
-      {GEAR_TEETH.map((t, i) => (
-        <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#1a7a2e" strokeWidth="3.5" strokeLinecap="round" />
-      ))}
-      <circle cx="30" cy="30" r="18" fill="#1a7a2e" />
-      <circle cx="30" cy="30" r="6" fill="white" />
-    </svg>
-  );
-}
-
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: 'Arial, sans-serif' }}>
       {/* Header */}
       <header className="bg-white px-6 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #e5e7eb' }}>
         <div className="flex items-center gap-3">
-          <KiitGearLogo />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo kiit.png" alt="KIIT Logo" width={60} height={60} style={{ objectFit: 'contain' }} />
           <div>
             <div
               className="font-extrabold tracking-wide uppercase"
@@ -43,7 +16,7 @@ export default function LandingPage() {
               Kalinga Institute of Industrial Technology
             </div>
             <div className="text-gray-500 italic" style={{ fontSize: '0.72rem' }}>
-              Deemed to be University U/S 3 of UGC Act, 1956 &nbsp;&#8212;&#8212;
+              Deemed to be University U/S 3 of UGC Act, 1956 &nbsp;&mdash;&mdash;
             </div>
           </div>
         </div>
@@ -81,24 +54,14 @@ export default function LandingPage() {
           className="mx-auto grid gap-8"
           style={{ maxWidth: 960, gridTemplateColumns: '1fr 1fr', alignItems: 'stretch' }}
         >
-          {/* Left: desk photo placeholder */}
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{
-              minHeight: 340,
-              background: 'linear-gradient(160deg, #c8b89a 0%, #a09070 35%, #708060 65%, #506848 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.55)' }}>
-              <div style={{ fontSize: '5rem', lineHeight: 1 }}>💻</div>
-              <div style={{ fontSize: '1.5rem', marginTop: 4 }}>📱</div>
-              <p style={{ fontSize: '0.7rem', marginTop: 8, color: 'rgba(255,255,255,0.4)' }}>
-                KIIT Campus · Bhubaneswar
-              </p>
-            </div>
+          {/* Left: campus branding image */}
+          <div className="rounded-2xl overflow-hidden" style={{ minHeight: 340 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/branding-image.jpg"
+              alt="KIIT Campus"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', minHeight: 340 }}
+            />
           </div>
 
           {/* Right: Login card */}
@@ -118,10 +81,26 @@ export default function LandingPage() {
               Click here to Login
             </Link>
             <p className="text-gray-500 text-sm">or visit</p>
-            <p className="font-bold text-gray-800 text-sm">https://kiitportal.kiituniversity.net/</p>
+            <a
+              href="https://ksap.kiit.ac.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-bold underline"
+              style={{ color: '#0055cc' }}
+            >
+              https://ksap.kiit.ac.in
+            </a>
           </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="px-6 py-4 border-t border-gray-200 text-center text-xs text-gray-400">
+        <p>
+          This is a simulation tool. Not affiliated with or endorsed by KIIT University or SAP SE.
+        </p>
+        <p className="mt-1">All trademarks belong to their respective owners.</p>
+      </footer>
     </div>
   );
 }

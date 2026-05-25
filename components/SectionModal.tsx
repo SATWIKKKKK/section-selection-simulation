@@ -1,24 +1,37 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useSimStore } from '@/store/simStore';
 import { SECTIONS } from '@/lib/sections';
 import ReactionTimer from './ReactionTimer';
 
+const MODAL_DURATION_SECONDS = 10;
+
 interface SectionModalProps {
+  semester?: string;
   onClose: () => void;
+  onMissed: () => void;
 }
 
-export default function SectionModal({ onClose }: SectionModalProps) {
-  const { seatCounts, claimSection, windowOpen, windowStartTime, drainSeat, botRushEnabled, difficulty } = useSimStore();
+export default function SectionModal({ semester, onClose, onMissed }: SectionModalProps) {
+  const { seatCounts, claimSection, windowOpen, windowStartTime, drainSeat } = useSimStore();
   const [selected, setSelected] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const drainRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [shakeSections, setShakeSections] = useState<Set<string>>(new Set());
+  const modalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const drainRates = useRef<Record<string, number>>({});
 
-  // Bot drain logic
+  // Assign each section a random drain rate once
   useEffect(() => {
-    if (!windowOpen || !botRushEnabled) return;
+    SECTIONS.forEach((sec) => {
+      // Rates between 6 and 15 seats/sec — ensures most sections drain within 10s
+      drainRates.current[sec.code] = Math.floor(Math.random() * 10) + 6;
+    });
+  }, []);
+
+  // Bot drain logic — drain ALL sections each second
+  useEffect(() => {
+    if (!windowOpen) return;
 
     drainRef.current = setInterval(() => {
       const store = useSimStore.getState();
@@ -26,46 +39,41 @@ export default function SectionModal({ onClose }: SectionModalProps) {
         clearInterval(drainRef.current!);
         return;
       }
-      const numSections = Math.ceil(54 * 0.15);
-      const shuffled = [...SECTIONS].sort(() => Math.random() - 0.5).slice(0, numSections);
-      const newShake = new Set<string>();
-      shuffled.forEach((sec) => {
+      SECTIONS.forEach((sec) => {
         const current = store.seatCounts[sec.code] ?? 0;
-        if (current === 0) return;
-        let amount = 1;
-        if (difficulty === 'normal') amount = Math.floor(Math.random() * 3) + 1;
-        if (difficulty === 'hard') amount = Math.floor(Math.random() * 4) + 2;
-        drainSeat(sec.code, amount);
-        const after = Math.max(0, current - amount);
-        if (after === 0 && current > 0) newShake.add(sec.code);
+        if (current > 0) {
+          drainSeat(sec.code, drainRates.current[sec.code] ?? 8);
+        }
       });
-      if (newShake.size > 0) {
-        setShakeSections((prev) => {
-          const combined = new Set<string>();
-          prev.forEach((s) => combined.add(s));
-          newShake.forEach((s) => combined.add(s));
-          return combined;
-        });
-        setTimeout(() => {
-          setShakeSections((prev) => {
-            const next = new Set(prev);
-            newShake.forEach((s) => next.delete(s));
-            return next;
-          });
-        }, 400);
-      }
-    }, 800);
+    }, 1000);
+
+    // 10-second hard timer — force all to 0 and trigger missed callback
+    modalTimerRef.current = setTimeout(() => {
+      clearInterval(drainRef.current!);
+      // Force all seats to 0
+      SECTIONS.forEach((sec) => {
+        drainSeat(sec.code, 999);
+      });
+      // Small delay so UI shows all-zero before popup
+      setTimeout(() => {
+        if (!useSimStore.getState().selectedSection) {
+          onMissed();
+        }
+      }, 300);
+    }, MODAL_DURATION_SECONDS * 1000);
 
     return () => {
       if (drainRef.current) clearInterval(drainRef.current);
+      if (modalTimerRef.current) clearTimeout(modalTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowOpen, botRushEnabled]);
+  }, [windowOpen]);
 
   const handleSubmit = () => {
     if (!selected || submitted) return;
     setSubmitted(true);
-    if (drainRef.current) clearInterval(drainRef.current);
+    clearInterval(drainRef.current!);
+    clearTimeout(modalTimerRef.current!);
     claimSection(selected);
   };
 
@@ -93,7 +101,7 @@ export default function SectionModal({ onClose }: SectionModalProps) {
           className="flex justify-between items-center px-2 py-1 font-bold text-white text-xs"
           style={{ background: 'linear-gradient(to bottom, #10638e, #0d4d70)' }}
         >
-          <span>Select Faculty / Section</span>
+          <span>Select Faculty / Section{semester ? ` — ${semester} Semester` : ''}</span>
           <div className="flex items-center gap-2">
             <ReactionTimer windowStartTime={windowStartTime} />
             <div className="flex gap-1">
@@ -121,48 +129,38 @@ export default function SectionModal({ onClose }: SectionModalProps) {
           }}
         >
           <form id="section-form">
-            <AnimatePresence>
-              {SECTIONS.map((sec, i) => {
-                const seats = seatCounts[sec.code] ?? 78;
-                const isFull = seats === 0;
-                const isShaking = shakeSections.has(sec.code);
-                return (
-                  <motion.label
-                    key={sec.code}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{
-                      opacity: isFull ? 0.4 : 1,
-                      y: 0,
-                      x: isShaking ? [0, -3, 3, -3, 0] : 0,
-                    }}
-                    transition={
-                      isShaking
-                        ? { duration: 0.3, x: { duration: 0.3 } }
-                        : { delay: i * 0.015 }
-                    }
-                    className={`flex items-center mb-1.5 text-xs cursor-pointer select-none ${
-                      isFull ? 'pointer-events-none text-gray-400 line-through' : 'text-[#444] hover:text-black'
-                    } ${selected === sec.code ? 'font-bold text-blue-700' : ''}`}
-                    style={{ display: 'flex' }}
-                  >
-                    <input
-                      type="radio"
-                      name="faculty_section"
-                      value={sec.code}
-                      disabled={isFull || submitted}
-                      checked={selected === sec.code}
-                      onChange={() => setSelected(sec.code)}
-                      className="mr-2 accent-blue-700"
-                    />
-                    {sec.code} ( Available seat -{' '}
-                    <span className={seats < 10 ? 'text-red-500 font-bold' : ''}>
-                      {String(seats).padStart(3, '0')}
-                    </span>
-                    )
-                  </motion.label>
-                );
-              })}
-            </AnimatePresence>
+            {SECTIONS.map((sec) => {
+              const seats = seatCounts[sec.code] ?? 78;
+              const isFull = seats === 0;
+              if (isFull) return null; // hide sections with 0 seats
+              return (
+                <label
+                  key={sec.code}
+                  className={`flex items-center mb-1.5 text-xs cursor-pointer select-none ${
+                    isFull ? 'pointer-events-none text-gray-400 line-through' : 'text-[#444] hover:text-black'
+                  } ${selected === sec.code ? 'font-bold text-blue-700' : ''}`}
+                  style={{ display: 'flex' }}
+                >
+                  <input
+                    type="radio"
+                    name="faculty_section"
+                    value={sec.code}
+                    disabled={isFull || submitted}
+                    checked={selected === sec.code}
+                    onChange={() => setSelected(sec.code)}
+                    className="mr-2 accent-blue-700"
+                  />
+                  {sec.code} ( Available seat -{' '}
+                  <span className={seats < 10 ? 'text-red-500 font-bold' : ''}>
+                    {String(seats).padStart(3, '0')}
+                  </span>
+                  )
+                </label>
+              );
+            })}
+            {SECTIONS.every((sec) => (seatCounts[sec.code] ?? 0) === 0) && (
+              <p className="text-xs text-gray-500 text-center py-4">All sections are full.</p>
+            )}
           </form>
         </div>
 
@@ -187,7 +185,7 @@ export default function SectionModal({ onClose }: SectionModalProps) {
                   : 'bg-gray-200 border-gray-300 text-gray-400 cursor-not-allowed'
               }`}
             >
-              <span className="text-green-600 font-bold">✔</span> Submit
+              <span className="text-green-600 font-bold">&#x2714;</span> Submit
             </button>
             <div
               className="w-full text-center text-[10px] px-1 py-0.5 font-bold"

@@ -8,11 +8,7 @@ import CountdownTimer from '@/components/CountdownTimer';
 import SectionModal from '@/components/SectionModal';
 import { useSimStore } from '@/store/simStore';
 
-const DIFFICULTY_SECONDS: Record<string, number> = {
-  easy: 60,
-  normal: 30,
-  hard: 20,
-};
+const COUNTDOWN_SECONDS = 10;
 
 export default function SectionSelectionPage() {
   const router = useRouter();
@@ -23,12 +19,12 @@ export default function SectionSelectionPage() {
     initSeats,
     selectedSection,
     resetRound,
-    attempts,
+    missedWindow,
   } = useSimStore();
 
+  const [semester, setSemester] = useState<string>('');
   const [modalVisible, setModalVisible] = useState(false);
-  const [windowDuration] = useState(DIFFICULTY_SECONDS[difficulty] || 30);
-  const windowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [failedPopupVisible, setFailedPopupVisible] = useState(false);
   const missedRef = useRef(false);
 
   // Init seats when page loads
@@ -36,48 +32,42 @@ export default function SectionSelectionPage() {
     resetRound();
     initSeats();
     missedRef.current = false;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // When window opens, show modal and start close timer
+  // When window opens, show modal
   useEffect(() => {
     if (windowOpen) {
       setModalVisible(true);
       missedRef.current = false;
-      windowTimerRef.current = setTimeout(() => {
-        if (!useSimStore.getState().selectedSection) {
-          missedRef.current = true;
-          useSimStore.getState().missedWindow();
-          setModalVisible(false);
-          router.push('/result');
-        }
-      }, windowDuration * 1000);
     }
-    return () => {
-      if (windowTimerRef.current) clearTimeout(windowTimerRef.current);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowOpen]);
 
   // Watch for section claim and navigate
   useEffect(() => {
     if (selectedSection && !missedRef.current) {
-      if (windowTimerRef.current) clearTimeout(windowTimerRef.current);
       setModalVisible(false);
       router.push('/result');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSection]);
 
   const handleCountdownComplete = useCallback(() => {
     openWindow();
   }, [openWindow]);
 
-  const handleModalClose = () => {
+  const handleModalMissed = useCallback(() => {
+    missedRef.current = true;
+    missedWindow();
     setModalVisible(false);
-  };
+    setFailedPopupVisible(true);
+  }, [missedWindow]);
 
-  const lastAttempt = attempts.length > 0 ? attempts[attempts.length - 1] : null;
+  const handlePopupOk = () => {
+    setFailedPopupVisible(false);
+    router.push('/result');
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#e8eef3]" style={{ fontFamily: 'Arial, sans-serif', fontSize: 12 }}>
@@ -95,98 +85,93 @@ export default function SectionSelectionPage() {
               <p className="text-xs text-gray-600">Select Faculty / Section for Subjects</p>
             </div>
 
-            {/* Countdown / status card */}
-            {!windowOpen && (
-              <div className="bg-white border border-gray-300 rounded-lg p-8 mb-6 flex flex-col items-center shadow-sm">
-                <p className="text-sm font-bold text-gray-700 mb-6">
-                  Window opens in:
-                </p>
-                <CountdownTimer
-                  key={`countdown-${difficulty}`}
-                  seconds={windowDuration}
-                  onComplete={handleCountdownComplete}
-                />
-                <div className="mt-6 flex items-center gap-2 text-xs text-blue-600 bg-blue-50 border border-blue-200 px-4 py-2 rounded">
-                  <span>🎯</span>
-                  <span>Practice mode: window simulated — wait for countdown</span>
-                </div>
-                <div className="mt-3 text-xs text-gray-500">
-                  Mode: <span className="font-bold capitalize text-blue-700">{difficulty}</span>
-                  {' · '}Window duration: <span className="font-bold">{windowDuration}s</span>
+            {/* Step 1: Semester selection */}
+            {!semester && (
+              <div className="bg-white border border-gray-300 rounded-sm p-6 mb-6 shadow-sm">
+                <p className="text-sm font-bold text-[#003366] mb-4">Select your Semester to continue:</p>
+                <div className="flex gap-4">
+                  {['3rd', '5th'].map((sem) => (
+                    <button
+                      key={sem}
+                      onClick={() => setSemester(sem)}
+                      className="px-6 py-2 text-sm font-bold border border-[#3f688e] text-[#003366] transition rounded-sm"
+                      style={{ background: 'linear-gradient(to bottom, #ffffff, #d6e4f0)' }}
+                    >
+                      {sem} Semester
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* Subject table */}
-            <div className="bg-white border border-gray-300 rounded-sm shadow-sm overflow-x-auto">
-              <table className="w-full text-xs border-collapse">
-                <thead>
-                  <tr className="bg-[#3f688e] text-white">
-                    <th className="px-3 py-2 text-left font-bold">Subject Code</th>
-                    <th className="px-3 py-2 text-left font-bold">Subject Description</th>
-                    <th className="px-3 py-2 text-left font-bold">Faculty</th>
-                    <th className="px-3 py-2 text-left font-bold">Section</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="bg-[#fff8dc] border-b border-gray-200">
-                    <td className="px-3 py-2 font-bold text-[#003366]">CS20001</td>
-                    <td className="px-3 py-2">Core Subject Section</td>
-                    <td className="px-3 py-2 text-gray-500">—</td>
-                    <td className="px-3 py-2">
-                      {selectedSection ? (
-                        <span className="text-green-700 font-bold">{selectedSection} ✓</span>
-                      ) : (
-                        <button
-                          onClick={() => windowOpen && setModalVisible(true)}
-                          disabled={!windowOpen}
-                          className={`px-3 py-1 text-xs border rounded-sm transition ${
-                            windowOpen
-                              ? 'bg-gradient-to-b from-white to-[#e3e3e3] border-[#a5a5a5] text-[#333] hover:from-white hover:to-[#eee] cursor-pointer'
-                              : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
-                          }`}
-                        >
-                          {windowOpen ? 'Select Section' : '⏳ Waiting...'}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Last attempt result pill */}
-            {lastAttempt && (
-              <div className="mt-4 flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded text-xs">
-                <span className="text-blue-700 font-bold">Last attempt:</span>
-                {lastAttempt.section ? (
-                  <span className="text-green-700">
-                    {lastAttempt.section} — {(lastAttempt.reactionMs / 1000).toFixed(2)}s — Grade: {lastAttempt.grade}
-                  </span>
-                ) : (
-                  <span className="text-red-600">Missed</span>
-                )}
+            {/* Step 2: Countdown (after semester selected) */}
+            {semester && !windowOpen && (
+              <div className="bg-white border border-gray-300 rounded-sm p-8 mb-6 flex flex-col items-center shadow-sm">
+                <p className="text-sm font-bold text-[#003366] mb-1">
+                  Semester: <span className="text-[#3f688e]">{semester}</span>
+                </p>
+                <p className="text-xs text-gray-600 mb-5">Section selection window opens in:</p>
+                <CountdownTimer
+                  key={`countdown-${difficulty}`}
+                  seconds={COUNTDOWN_SECONDS}
+                  onComplete={handleCountdownComplete}
+                />
               </div>
             )}
 
             {/* Instructions */}
-            <div className="mt-6 bg-[#fff8e1] border border-yellow-300 rounded p-4 text-xs text-gray-700 space-y-1">
-              <p className="font-bold text-yellow-800 mb-2">Instructions:</p>
-              <p>1. Wait for the countdown to finish — the section selection window will open automatically.</p>
-              <p>2. Select your preferred section from the list and click Submit.</p>
-              <p>3. Once submitted, the response cannot be edited.</p>
-              <p>4. Your reaction time will be graded: S (&lt;5s) · A+ (&lt;10s) · A (&lt;20s) · B (&lt;30s) · C (30s+)</p>
-            </div>
+            {semester && (
+              <div className="bg-white border border-gray-300 rounded-sm p-4 text-xs text-gray-700 space-y-1 shadow-sm">
+                <p className="font-bold text-[#003366] mb-2" style={{ fontSize: 11 }}>Instructions:</p>
+                <p>1. Wait for the countdown to finish — the section selection window will open automatically.</p>
+                <p>2. Select your preferred section from the list and click Submit.</p>
+                <p>3. Once submitted, the response cannot be edited.</p>
+                <p>4. If no section is selected within the allotted time, a section will be randomly assigned.</p>
+              </div>
+            )}
           </div>
         </main>
       </div>
 
-      {/* Modal */}
+      {/* Section Modal */}
       <AnimatePresence>
         {modalVisible && windowOpen && (
-          <SectionModal onClose={handleModalClose} />
+          <SectionModal semester={semester} onClose={() => setModalVisible(false)} onMissed={handleModalMissed} />
         )}
       </AnimatePresence>
+
+      {/* Failure popup overlay */}
+      {failedPopupVisible && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40">
+          <div
+            className="bg-white border border-gray-400 shadow-xl rounded-sm max-w-sm w-full mx-4"
+            style={{ fontFamily: 'Tahoma, Arial, sans-serif' }}
+          >
+            {/* Popup header */}
+            <div
+              className="px-3 py-1.5 flex items-center gap-2 text-white text-xs font-bold"
+              style={{ background: 'linear-gradient(to bottom, #10638e, #0d4d70)' }}
+            >
+              <span>Information</span>
+            </div>
+            {/* Popup body */}
+            <div className="p-5">
+              <p className="text-sm text-gray-800 leading-relaxed mb-5">
+                You have failed to choose any section within allotted time. You will receive a random section allotted to your name.
+              </p>
+              <div className="flex justify-center">
+                <button
+                  onClick={handlePopupOk}
+                  className="px-6 py-1 text-sm font-bold border border-[#aaa] transition rounded-sm"
+                  style={{ background: 'linear-gradient(to bottom, #ffffff, #e0e0e0)' }}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

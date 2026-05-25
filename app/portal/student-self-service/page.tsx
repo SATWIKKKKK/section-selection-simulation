@@ -3,17 +3,7 @@ import Link from 'next/link';
 import PortalHeader from '@/components/PortalHeader';
 import PortalSidebar from '@/components/PortalSidebar';
 
-function SapIcon({ green = false }: { green?: boolean }) {
-  if (green) {
-    return (
-      <div className="w-12 h-12 bg-white border border-gray-300 rounded shadow-sm mr-4 flex items-center justify-center flex-shrink-0">
-        <svg className="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="9" strokeWidth="2" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 7v5l3 3" />
-        </svg>
-      </div>
-    );
-  }
+function SapIcon() {
   return (
     <div className="w-12 h-12 bg-white border border-gray-300 rounded shadow-sm mr-4 flex flex-wrap p-1 content-center justify-center flex-shrink-0">
       <div className="w-3 h-3 bg-yellow-400 m-[1px] rounded-sm" />
@@ -25,6 +15,7 @@ function SapIcon({ green = false }: { green?: boolean }) {
 }
 
 const TILES = [
+  { label: 'Section Selection', href: '/portal/section-selection' },
   { label: 'Exam Booking', href: '#' },
   { label: 'RTGS Submit Application', href: '#' },
   { label: 'Leave Application for Students', href: '#' },
@@ -35,7 +26,6 @@ const TILES = [
   { label: 'Mental Health Matters', href: '#' },
   { label: 'Fees Details', href: '#', special: true },
   { label: 'Pre-mid-semester Student Feedback on Teaching-Learning', href: '#' },
-  { label: 'Section Selection', href: '/portal/section-selection', green: true },
 ];
 
 export default function StudentSelfServicePage() {
@@ -51,16 +41,13 @@ export default function StudentSelfServicePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 max-w-5xl">
             {TILES.map((tile, i) => (
               <Link key={i} href={tile.href} className="flex items-start group">
-                <SapIcon green={tile.green} />
+                <SapIcon />
                 <div className="flex-grow pt-1">
-                  <span className={`text-sm group-hover:underline ${tile.green ? 'text-green-700 font-bold' : 'text-[#0000ee]'}`}>
+                  <span className="text-sm group-hover:underline text-[#0000ee]">
                     {tile.label}
                   </span>
                   {tile.note && (
                     <p className="text-xs text-gray-600 mt-1 leading-tight">{tile.note}</p>
-                  )}
-                  {tile.green && (
-                    <p className="text-xs text-green-600 mt-0.5">🕐 Practice section selection simulation</p>
                   )}
                 </div>
               </Link>

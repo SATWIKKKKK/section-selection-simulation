@@ -1,4 +1,11 @@
-'use client';
+const fs = require('fs');
+const path = require('path');
+const root = path.join(__dirname, '..');
+
+// ============================================================
+// app/result/page.tsx - Full SAP portal theme overhaul
+// ============================================================
+const resultPage = `'use client';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -104,7 +111,7 @@ export default function ResultPage() {
                   </tr>
                   <tr className="bg-[#f7f9fb] border-b border-gray-200">
                     <td className="px-4 py-2 font-bold text-[#003366]">Speed Grade</td>
-                    <td className={`px-4 py-2 font-bold ${GRADE_COLOR[grade]}`}>{grade}</td>
+                    <td className={\`px-4 py-2 font-bold \${GRADE_COLOR[grade]}\`}>{grade}</td>
                   </tr>
                   <tr className="border-b border-gray-200">
                     <td className="px-4 py-2 font-bold text-[#003366]">Seats Left When Claimed</td>
@@ -177,3 +184,7 @@ export default function ResultPage() {
     </div>
   );
 }
+`;
+fs.writeFileSync(path.join(root, 'app', 'result', 'page.tsx'), resultPage);
+console.log('✓ app/result/page.tsx');
+console.log('\nAll files written!');
