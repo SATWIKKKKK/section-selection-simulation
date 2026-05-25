@@ -40,12 +40,13 @@ export default function ResultChart({ attempts }: ResultChartProps) {
           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
           <YAxis tick={{ fontSize: 11 }} unit="s" width={35} />
           <Tooltip
-            formatter={(val: number, _: string, props: { payload?: { raw?: Attempt } }) => {
-              const raw = props.payload?.raw;
-              if (!raw) return [val + 's', 'Reaction'];
+            formatter={(val, _name, props) => {
+              const raw = (props as { payload?: { raw?: Attempt } }).payload?.raw;
+              const v = val as number;
+              if (!raw) return [v + 's', 'Reaction'];
               return raw.section === null
                 ? ['Missed', 'Result']
-                : [val + 's', 'Reaction'];
+                : [v + 's', 'Reaction'];
             }}
           />
           {best !== null && (

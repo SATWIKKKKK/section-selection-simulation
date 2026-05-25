@@ -21,11 +21,9 @@ export default function SectionSelectionPage() {
     windowOpen,
     openWindow,
     initSeats,
-    missedWindow,
     selectedSection,
     resetRound,
     attempts,
-    studentName,
   } = useSimStore();
 
   const [modalVisible, setModalVisible] = useState(false);

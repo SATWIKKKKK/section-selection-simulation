@@ -23,7 +23,7 @@ function StatPill({ value, label, color = 'text-gray-800' }: { value: string; la
 
 export default function ResultPage() {
   const router = useRouter();
-  const { attempts, resetRound, clearHistory, difficulty } = useSimStore();
+  const { attempts, resetRound, clearHistory } = useSimStore();
 
   const latest = attempts.length > 0 ? attempts[attempts.length - 1] : null;
 

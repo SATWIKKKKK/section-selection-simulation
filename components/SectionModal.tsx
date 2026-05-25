@@ -40,7 +40,12 @@ export default function SectionModal({ onClose }: SectionModalProps) {
         if (after === 0 && current > 0) newShake.add(sec.code);
       });
       if (newShake.size > 0) {
-        setShakeSections((prev) => new Set([...prev, ...newShake]));
+        setShakeSections((prev) => {
+          const combined = new Set<string>();
+          prev.forEach((s) => combined.add(s));
+          newShake.forEach((s) => combined.add(s));
+          return combined;
+        });
         setTimeout(() => {
           setShakeSections((prev) => {
             const next = new Set(prev);
