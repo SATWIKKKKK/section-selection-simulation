@@ -18,7 +18,7 @@ export default function PortalHeader({ activePage = 'home' }: PortalHeaderProps)
   const tabs: Tab[] = [
     { label: 'Home', href: '/portal', active: activePage === 'home' },
     {
-      label: 'Student Self Service for Computer Science & Engineering (CSE - 2024 Batch)',
+      label: 'Student Self Service for Computer Science & Engineering (CSE - 2024/25 Batch)',
       href: '/portal/student-self-service',
       active: activePage === 'student-self-service' || activePage === 'section-selection',
     },
@@ -33,7 +33,7 @@ export default function PortalHeader({ activePage = 'home' }: PortalHeaderProps)
         style={{ background: 'linear-gradient(to right, #c4d7ec 0%, #dbe9f5 40%, #b8cfea 100%)', minHeight: 64 }}
       >
         <div className="text-[#003366] font-bold text-sm bg-white/70 px-2 py-1 rounded-sm">
-          Welcome {studentName || 'SATWIK CHANDRA'} .
+          Welcome { 'LOVABLE KIITIAN'} .
         </div>
         <div className="flex-1 mx-4 h-10 rounded overflow-hidden">
           <div
@@ -43,9 +43,9 @@ export default function PortalHeader({ activePage = 'home' }: PortalHeaderProps)
         </div>
         <div className="flex items-center space-x-4 text-xs text-[#003366]">
           <div className="flex items-center space-x-2 bg-white/70 px-2 py-1 rounded-sm">
-            <a href="#" className="hover:underline">Help</a>
+            <a href="#" style={{ color: '#204ba2', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '0.7em', fontStyle: 'normal' }}>Help</a>
             <span>|</span>
-            <Link href="/portal" className="hover:underline">Log off</Link>
+            <Link href="/portal" style={{ color: '#204ba2', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '0.7em', fontStyle: 'normal' }}>Log off</Link>
           </div>
           <div className="bg-[#1a3a6b] w-16 h-10 flex items-center justify-center rounded-sm">
             <span className="text-white font-bold text-xs">KIIT</span>

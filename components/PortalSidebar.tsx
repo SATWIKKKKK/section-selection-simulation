@@ -85,7 +85,7 @@ export default function PortalSidebar({ activePage }: PortalSidebarProps) {
                     <span className="w-1.5 h-1.5 bg-black inline-block flex-shrink-0" />
                   )}
                   {item.folder && <span className="text-[10px]">📁</span>}
-                  <span className="hover:underline">{item.label}</span>
+                  <span style={{ color: '#204ba2', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '0.7em', fontStyle: 'normal' }}>{item.label}</span>
                 </Link>
               </li>
             );

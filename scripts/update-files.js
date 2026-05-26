@@ -141,7 +141,7 @@ export default function LoginPage() {
     }
     setLoading(true);
     setTimeout(() => {
-      setCredentials(userId.trim(), 'SATWIK CHANDRA');
+      setCredentials(userId.trim(), 'STUDENT');
       router.push('/portal');
     }, 800);
   };
