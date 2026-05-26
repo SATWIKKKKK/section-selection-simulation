@@ -33,7 +33,7 @@ export default function PortalHeader({ activePage = 'home' }: PortalHeaderProps)
         style={{ background: 'linear-gradient(to right, #c4d7ec 0%, #dbe9f5 40%, #b8cfea 100%)', minHeight: 64 }}
       >
         <div className="text-[#003366] font-bold text-sm bg-white/70 px-2 py-1 rounded-sm">
-          Welcome { 'LOVABLE KIITIAN'} .
+          Welcome {studentName || 'KIITIAN'} .
         </div>
         <div className="flex-1 mx-4 h-10 rounded overflow-hidden">
           <div
