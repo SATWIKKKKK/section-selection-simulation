@@ -30,27 +30,33 @@ export default function SectionSelectionPage() {
   const [modalVisible, setModalVisible] = useState(false);
   const [failedPopupVisible, setFailedPopupVisible] = useState(false);
   const missedRef = useRef(false);
+  // Only true after openWindow() fires during THIS session — prevents stale
+  // selectedSection from a previous round triggering a false /result redirect
+  const sessionActiveRef = useRef(false);
 
   // Init seats when page loads
   useEffect(() => {
     resetRound();
     initSeats();
     missedRef.current = false;
+    sessionActiveRef.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // When window opens, show modal
   useEffect(() => {
     if (windowOpen) {
+      sessionActiveRef.current = true;
       setModalVisible(true);
       missedRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowOpen]);
 
-  // Watch for section claim and navigate
+  // Watch for section claim and navigate — only acts when the window
+  // genuinely opened this session (sessionActiveRef guards against stale state)
   useEffect(() => {
-    if (selectedSection && !missedRef.current) {
+    if (selectedSection && sessionActiveRef.current && !missedRef.current) {
       setModalVisible(false);
       router.push('/result');
     }
@@ -116,8 +122,8 @@ export default function SectionSelectionPage() {
               </div>
             )}
 
-            {/* Step 2: Countdown (after semester selected) */}
-            {semester && !windowOpen && (
+            {/* Step 2: Countdown (after semester selected, before window opens or round ends) */}
+            {semester && !windowOpen && !selectedSection && !failedPopupVisible && (
               <div className="bg-white border border-gray-300 rounded-sm p-8 mb-6 flex flex-col items-center shadow-sm">
                 <p className="text-sm font-bold text-[#003366] mb-1">
                   Semester: <span className="text-[#3f688e]">{semester}</span>
