@@ -5,7 +5,8 @@ import { AnimatePresence } from 'framer-motion';
 import PortalHeader from '@/components/PortalHeader';
 import PortalSidebar from '@/components/PortalSidebar';
 import CountdownTimer from '@/components/CountdownTimer';
-import SectionModal from '@/components/SectionModal';
+import dynamic from 'next/dynamic';
+const SectionModal = dynamic(() => import('@/components/SectionModal'), { ssr: false });
 import { useSimStore } from '@/store/simStore';
 
 const COUNTDOWN_SECONDS = 10;

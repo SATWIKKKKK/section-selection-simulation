@@ -1,6 +1,7 @@
 'use client';
 import PortalHeader from '@/components/PortalHeader';
 import PortalSidebar from '@/components/PortalSidebar';
+import Image from 'next/image';
 
 export default function PortalPage() {
   return (
@@ -15,10 +16,11 @@ export default function PortalPage() {
           {/* Campus image */}
           <div className="flex justify-center mb-6">
             <div className="border border-gray-300 p-1 bg-white inline-block shadow-sm">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src="/ESSWelcome.jpg"
                 alt="KIIT University Campus"
+                width={500}
+                height={100}
                 style={{ width: 500, height: 100, objectFit: 'cover', display: 'block', maxWidth: '100%' }}
               />
             </div>

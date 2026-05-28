@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useSimStore } from '@/store/simStore';
 
 export default function LoginPage() {
@@ -46,11 +47,13 @@ export default function LoginPage() {
         <div className="flex" style={{ minHeight: 380 }}>
           {/* Left: campus photo */}
           <div style={{ width: '44%', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/KIIT-University-SAP-Portal-Login-800x600.webp"
               alt="KIIT Campus"
+              width={800}
+              height={600}
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              priority
             />
           </div>
 
@@ -154,8 +157,7 @@ export default function LoginPage() {
             {/* Footer inside right panel */}
             <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <p style={{ fontSize: '0.65rem', color: '#888' }}>Copyright &copy; SAP AG. All Rights Reserved.</p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo kiit.png" alt="KIIT" width={36} height={36} style={{ objectFit: 'contain' }} />
+              <Image src="/logo kiit.png" alt="KIIT" width={36} height={36} style={{ objectFit: 'contain' }} />
             </div>
           </div>
         </div>

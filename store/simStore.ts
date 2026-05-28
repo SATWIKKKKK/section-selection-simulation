@@ -43,6 +43,7 @@ interface SimState {
   initSeats: () => void;
   openWindow: () => void;
   drainSeat: (section: string, amount: number) => void;
+  drainAllSeats: (drainAmounts: Record<string, number>) => void;
   claimSection: (section: string) => void;
   missedWindow: () => void;
   resetRound: () => void;
@@ -87,6 +88,16 @@ export const useSimStore = create<SimState>()(
               [section]: Math.max(0, current - amount),
             },
           };
+        }),
+
+      drainAllSeats: (drainAmounts) =>
+        set((s) => {
+          const newCounts = { ...s.seatCounts };
+          for (const [section, amount] of Object.entries(drainAmounts)) {
+            const current = newCounts[section] ?? 0;
+            newCounts[section] = Math.max(0, current - amount);
+          }
+          return { seatCounts: newCounts };
         }),
 
       claimSection: (section) => {

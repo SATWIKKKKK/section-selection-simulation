@@ -14,7 +14,7 @@ interface SectionModalProps {
 }
 
 export default function SectionModal({ semester, onClose, onMissed }: SectionModalProps) {
-  const { seatCounts, claimSection, windowOpen, windowStartTime, drainSeat } = useSimStore();
+  const { seatCounts, claimSection, windowOpen, windowStartTime } = useSimStore();
   const [selected, setSelected] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const drainRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -39,21 +39,27 @@ export default function SectionModal({ semester, onClose, onMissed }: SectionMod
         clearInterval(drainRef.current!);
         return;
       }
+      const drainAmounts: Record<string, number> = {};
       SECTIONS.forEach((sec) => {
         const current = store.seatCounts[sec.code] ?? 0;
         if (current > 0) {
-          drainSeat(sec.code, drainRates.current[sec.code] ?? 8);
+          drainAmounts[sec.code] = drainRates.current[sec.code] ?? 8;
         }
       });
+      if (Object.keys(drainAmounts).length > 0) {
+        useSimStore.getState().drainAllSeats(drainAmounts);
+      }
     }, 1000);
 
     // 10-second hard timer — force all to 0 and trigger missed callback
     modalTimerRef.current = setTimeout(() => {
       clearInterval(drainRef.current!);
       // Force all seats to 0
+      const drainAmounts: Record<string, number> = {};
       SECTIONS.forEach((sec) => {
-        drainSeat(sec.code, 999);
+        drainAmounts[sec.code] = 999;
       });
+      useSimStore.getState().drainAllSeats(drainAmounts);
       // Small delay so UI shows all-zero before popup
       setTimeout(() => {
         if (!useSimStore.getState().selectedSection) {

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function LandingPage() {
   return (
@@ -6,8 +7,7 @@ export default function LandingPage() {
       {/* Header */}
       <header className="bg-white px-6 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #e5e7eb' }}>
         <div className="flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo kiit.png" alt="KIIT Logo" width={60} height={60} style={{ objectFit: 'contain' }} />
+          <Image src="/logo kiit.png" alt="KIIT Logo" width={60} height={60} style={{ objectFit: 'contain' }} priority />
           <div>
             <div
               className="font-extrabold tracking-wide uppercase"
@@ -56,11 +56,13 @@ export default function LandingPage() {
         >
           {/* Left: campus branding image */}
           <div className="rounded-2xl overflow-hidden" style={{ minHeight: 340 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/branding-image.jpg"
               alt="KIIT Campus"
+              width={800}
+              height={600}
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', minHeight: 340 }}
+              priority
             />
           </div>
 
