@@ -20,7 +20,7 @@ export default function PortalHeader({ activePage = 'home' }: PortalHeaderProps)
 
   const handleLogOff = () => {
     logout();
-    router.push('/login');
+    router.push('/');
   };
 
   const tabs: Tab[] = [

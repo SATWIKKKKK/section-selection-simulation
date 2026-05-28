@@ -64,7 +64,7 @@ export default function LandingPage() {
             }}
           >
             <Link
-              href="/login"
+              href="/portal"
               className="w-full text-center font-bold text-white rounded transition-all duration-300 transform hover:-translate-y-1 hover:bg-[#808080]"
               style={{ background: '#00b0f0', padding: '0.85rem 0', fontSize: '1.05rem', display: 'block' }}
             >
