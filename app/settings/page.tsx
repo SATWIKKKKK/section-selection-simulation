@@ -1,12 +1,12 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { useSimStore, Difficulty } from '@/store/simStore';
-import DifficultyCard from '@/components/DifficultyCard';
+import { useSimStore } from '@/store/simStore';
+import SimulationSettingsControls from '@/components/SimulationSettingsControls';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { difficulty, setDifficulty, customWindowTime, setCustomWindowTime, logout } = useSimStore();
+  const logout = useSimStore((state) => state.logout);
 
   const handleStart = () => {
     router.push('/portal/section-selection');
@@ -44,45 +44,9 @@ export default function SettingsPage() {
           </button>
         </motion.div>
 
-        {/* Difficulty cards */}
         <div className="mb-8">
-          <h2 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Difficulty</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {(['easy', 'normal', 'hard', 'custom'] as Difficulty[]).map((d) => (
-              <DifficultyCard
-                key={d}
-                difficulty={d}
-                selected={difficulty === d}
-                onClick={() => setDifficulty(d)}
-              />
-            ))}
-          </div>
+          <SimulationSettingsControls description="Configure your practice simulation before starting." />
         </div>
-
-        {/* Custom time slider */}
-        {difficulty === 'custom' && (
-          <div className="mb-8">
-            <h2 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Custom Window Time</h2>
-            <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-gray-700 font-semibold text-sm">Duration (seconds)</span>
-                <span className="text-blue-700 font-bold bg-blue-100 px-3 py-1 rounded-full">{customWindowTime}s</span>
-              </div>
-              <input
-                type="range"
-                min="1"
-                max="30"
-                value={customWindowTime}
-                onChange={(e) => setCustomWindowTime(Number(e.target.value))}
-                className="w-full accent-blue-600 cursor-pointer"
-              />
-              <div className="flex justify-between text-xs text-gray-400 mt-2">
-                <span>1s (Impossible)</span>
-                <span>30s (Very Relaxed)</span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Start button */}
         <motion.button

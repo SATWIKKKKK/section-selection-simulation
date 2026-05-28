@@ -11,19 +11,19 @@ interface DifficultyCardProps {
 const CONFIG: Record<Difficulty, { title: string; desc: string; badge: string; badgeColor: string }> = {
   easy: {
     title: 'Easy',
-    desc: '15s window · relaxed bot rush',
+    desc: '15s window ',
     badge: 'Beginner',
     badgeColor: 'bg-green-100 text-green-800',
   },
   normal: {
     title: 'Normal',
-    desc: '10s window · standard bot rush',
+    desc: '10s window ',
     badge: 'Standard',
     badgeColor: 'bg-blue-100 text-blue-800',
   },
   hard: {
     title: 'Hard',
-    desc: '5s window · aggressive bot rush',
+    desc: '5s window ',
     badge: 'Exam mode',
     badgeColor: 'bg-red-100 text-red-800',
   },

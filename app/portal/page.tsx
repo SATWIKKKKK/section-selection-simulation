@@ -12,7 +12,7 @@ export default function PortalPage() {
         <PortalSidebar activePage="/portal" />
 
         {/* Main content */}
-        <main className="flex-1 bg-[#f2f5f7] p-6 overflow-y-auto">
+        <main className="flex-1 bg-[#f2f5f7] p-3 md:p-6 overflow-y-auto">
           {/* Campus image */}
           <div className="flex justify-center mb-6">
             <div className="border border-gray-300 p-1 bg-white inline-block shadow-sm">
@@ -28,8 +28,8 @@ export default function PortalPage() {
 
           {/* Welcome text */}
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-[#3333cc] mb-2">Welcome To</h2>
-            <h1 className="text-3xl font-bold text-black tracking-wide">KIIT Self Service Portal</h1>
+            <h2 className="text-xl md:text-2xl font-bold text-[#3333cc] mb-2">Welcome To</h2>
+            <h1 className="text-2xl md:text-3xl font-bold text-black tracking-wide">KIIT Self Service Portal</h1>
           </div>
 
           {/* Description */}
@@ -72,7 +72,7 @@ export default function PortalPage() {
         </main>
 
         {/* Right scrollbar mock */}
-        <div className="w-4 bg-gray-200 border-l border-gray-300 flex flex-col items-center py-1">
+        <div className="hidden md:flex w-4 bg-gray-200 border-l border-gray-300 flex-col items-center py-1">
           <div className="w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-500 mb-1" />
           <div className="w-2 h-32 bg-gray-400 rounded-full" />
         </div>

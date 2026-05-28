@@ -37,7 +37,7 @@ export default function PortalSidebar({ activePage }: PortalSidebarProps) {
 
   if (collapsed) {
     return (
-      <aside className="w-8 bg-[#c9d8ec] border-r border-gray-400 flex flex-col items-center pt-2">
+      <aside className="hidden md:flex md:flex-col w-8 bg-[#c9d8ec] border-r border-gray-400 items-center pt-2">
         <button
           className="w-6 h-6 bg-gray-200 border border-gray-400 text-xs flex items-center justify-center"
           onClick={() => setCollapsed(false)}
@@ -47,7 +47,7 @@ export default function PortalSidebar({ activePage }: PortalSidebarProps) {
   }
 
   return (
-    <aside className="w-56 bg-[#c9d8ec] border-r border-gray-400 flex flex-col flex-shrink-0">
+    <aside className="hidden md:flex md:flex-col w-56 bg-[#c9d8ec] border-r border-gray-400 flex-shrink-0">
       {/* Sidebar controls */}
       <div className="bg-[#a9c2db] h-5 flex justify-between items-center px-1 border-b border-white">
         <div className="flex space-x-1">

@@ -37,7 +37,7 @@ export default function StudentSelfServicePage() {
         <PortalSidebar activePage="/portal/student-self-service" />
 
         {/* Content grid */}
-        <main className="flex-1 bg-[#f5f5f5] p-6 overflow-y-auto">
+          <main className="flex-1 bg-[#f5f5f5] p-3 md:p-6 overflow-y-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 max-w-5xl">
             {TILES.map((tile, i) => (
               <Link key={i} href={tile.href} className="flex items-start group">

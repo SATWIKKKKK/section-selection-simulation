@@ -51,7 +51,7 @@ export default function ResultPage() {
       <div className="flex flex-1 overflow-hidden">
         <PortalSidebar activePage="/portal/section-selection" />
 
-        <main className="flex-1 bg-[#f2f5f7] p-6 overflow-y-auto">
+        <main className="flex-1 bg-[#f2f5f7] p-3 md:p-6 overflow-y-auto">
           <div className="max-w-4xl mx-auto space-y-5">
 
             {/* Page title */}
@@ -68,6 +68,7 @@ export default function ResultPage() {
               >
                 Result Summary
               </div>
+              <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse">
                 <tbody>
                   <tr className="border-b border-gray-200">
@@ -118,10 +119,11 @@ export default function ResultPage() {
                   </tr>
                 </tbody>
               </table>
+              </div>
             </div>
 
             {/* Stats row */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-2 md:gap-4">
               <div className="bg-white border border-gray-300 rounded-sm shadow-sm p-3 text-center">
                 <div className="text-xl font-bold text-[#003366]">{attempts.length}</div>
                 <div className="text-xs text-gray-500 mt-0.5">Total Attempts</div>

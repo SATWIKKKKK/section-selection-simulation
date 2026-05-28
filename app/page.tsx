@@ -7,7 +7,7 @@ export default function LandingPage() {
       {/* Header */}
       <header className="bg-white px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #e5e7eb' }}>
         <div className="flex items-center gap-3">
-          <Image src="/logo kiit.png" alt="KIIT Logo" width={220} height={80} style={{ objectFit: 'contain' }} priority />
+          <Image src="/logo kiit.png" alt="KIIT Logo" width={270} height={95} style={{ objectFit: 'contain' }} priority />
         </div>
         <div className="flex flex-col items-center cursor-pointer select-none">
           <div
@@ -25,43 +25,42 @@ export default function LandingPage() {
       </header>
 
       {/* Body */}
-      <main className="px-6 pt-10 pb-16 bg-white">
-        <div className="text-center mb-10 flex flex-col items-center">
+      <main className="px-4 md:px-10 py-4 md:py-8 bg-white flex flex-col justify-center" style={{ minHeight: 'calc(100vh - 140px)' }}>
+        <div className="text-center mb-6 flex flex-col items-center flex-shrink-0">
           <h1
             className="font-bold text-gray-800"
-            style={{ fontSize: '2.2rem', letterSpacing: '-0.5px' }}
+            style={{ fontSize: '2rem', letterSpacing: '-0.5px' }}
           >
             KIIT SAP Portal
           </h1>
-          <p className="text-gray-500 mt-3 max-w-xl mx-auto" style={{ fontSize: '0.95rem' }}>
+          <p className="text-gray-500 mt-2 max-w-xl mx-auto" style={{ fontSize: '0.9rem' }}>
             India&apos;s first university to implement SAP in all its school &amp; Processes at a time
           </p>
-          <div className="mt-4" style={{ width: 80, height: 2, background: '#3ab0e8' }} />
+          <div className="mt-3" style={{ width: 80, height: 2, background: '#3ab0e8' }} />
         </div>
 
         <div
-          className="mx-auto grid gap-8 grid-cols-1 md:grid-cols-2"
-          style={{ maxWidth: 1024, alignItems: 'stretch' }}
+          className="mx-auto grid gap-6 grid-cols-1 md:grid-cols-2 w-full"
+          style={{ maxWidth: 1280, alignItems: 'stretch' }}
         >
           {/* Left: campus branding image */}
-          <div className="rounded-2xl overflow-hidden shadow-sm" style={{ minHeight: 340 }}>
+          <div className="rounded-2xl overflow-hidden shadow-sm relative" style={{ minHeight: 240, height: 'clamp(240px, 38vw, 520px)' }}>
             <Image
-              src="/branding-image.jpg"
+              src="/KIIT-University-SAP-Portal-Login-800x600.webp"
               alt="KIIT Campus"
-              width={800}
-              height={600}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', minHeight: 340 }}
+              fill
+              style={{ objectFit: 'cover' }}
               priority
             />
           </div>
 
           {/* Right: Login card */}
           <div
-            className="bg-white flex flex-col items-center justify-start gap-5 rounded-2xl"
+            className="bg-white flex flex-col items-center justify-center gap-5 rounded-2xl py-12 px-8"
             style={{
               border: '1px solid #e5e7eb',
               boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
-              padding: '2.5rem',
+              minHeight: 240,
             }}
           >
             <Link

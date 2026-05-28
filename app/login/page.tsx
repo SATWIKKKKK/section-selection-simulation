@@ -24,8 +24,8 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center"
-      style={{ background: '#ebeff2', fontFamily: 'Arial, sans-serif', padding: '2rem' }}
+      className="min-h-screen flex items-start md:items-center justify-center p-4 md:p-8"
+      style={{ background: '#ebeff2', fontFamily: 'Arial, sans-serif' }}
     >
       {/* Outer amber/gold frame */}
       <div
@@ -39,12 +39,12 @@ export default function LoginPage() {
           boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
         }}
       >
-        {/* Top section: image + form side by side */}
-        <div className="flex" style={{ minHeight: 380 }}>
-          {/* Left: campus photo */}
-          <div style={{ width: '44%', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+        {/* Top section: image + form — stacked on mobile, side by side on md+ */}
+        <div className="flex flex-col md:flex-row" style={{ minHeight: 380 }}>
+          {/* Left: campus photo — hidden on mobile */}
+          <div className="hidden md:block md:w-[44%] relative overflow-hidden flex-shrink-0" style={{ minHeight: 380 }}>
             <Image
-              src="/KIIT-University-SAP-Portal-Login-800x600.webp"
+              src="/branding-image.jpg"
               alt="KIIT Campus"
               width={800}
               height={600}
@@ -55,12 +55,9 @@ export default function LoginPage() {
 
           {/* Right: login form */}
           <div
+            className="w-full md:w-[56%] flex flex-col justify-between"
             style={{
-              width: '56%',
-              padding: '2rem 2rem 1.5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
+              padding: '1.5rem 1.5rem 1.25rem',
             }}
           >
             <div>

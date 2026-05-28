@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useSimStore } from '@/store/simStore';
 
 interface Tab {
@@ -13,7 +14,14 @@ interface PortalHeaderProps {
 }
 
 export default function PortalHeader({ activePage = 'home' }: PortalHeaderProps) {
+  const router = useRouter();
   const studentName = useSimStore((s) => s.studentName);
+  const logout = useSimStore((s) => s.logout);
+
+  const handleLogOff = () => {
+    logout();
+    router.push('/login');
+  };
 
   const tabs: Tab[] = [
     { label: 'Home', href: '/portal', active: activePage === 'home' },
@@ -30,24 +38,30 @@ export default function PortalHeader({ activePage = 'home' }: PortalHeaderProps)
       {/* Main Header */}
       <header
         className="w-full flex items-center justify-between px-3 py-2 border-b border-gray-400"
-        style={{ background: 'linear-gradient(to right, #c4d7ec 0%, #dbe9f5 40%, #b8cfea 100%)', minHeight: 64 }}
+        style={{ background: 'linear-gradient(to right, #c4d7ec 0%, #dbe9f5 40%, #b8cfea 100%)', minHeight: 48 }}
       >
-        <div className="text-[#003366] font-bold text-sm bg-white/70 px-2 py-1 rounded-sm">
+        <div className="flex-1 min-w-0 text-[#003366] font-bold text-xs md:text-sm bg-white/70 px-2 py-1 rounded-sm truncate mr-2">
           Welcome {studentName || 'KIITIAN'} .
         </div>
-        <div className="flex-1 mx-4 h-10 rounded overflow-hidden">
+        <div className="hidden md:block flex-1 mx-4 h-10 rounded overflow-hidden">
           <div
             className="w-full h-full"
             style={{ background: 'linear-gradient(135deg, #4a90d9 0%, #87bfee 40%, #c4d7ec 70%, #5b8ec4 100%)' }}
           />
         </div>
-        <div className="flex items-center space-x-4 text-xs text-[#003366]">
+        <div className="flex items-center space-x-2 md:space-x-4 text-xs text-[#003366] flex-shrink-0">
           <div className="flex items-center space-x-2 bg-white/70 px-2 py-1 rounded-sm">
             <a href="#" style={{ color: '#204ba2', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '0.7em', fontStyle: 'normal' }}>Help</a>
             <span>|</span>
-            <Link href="/portal" style={{ color: '#204ba2', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '0.7em', fontStyle: 'normal' }}>Log off</Link>
+            <button
+              type="button"
+              onClick={handleLogOff}
+              style={{ color: '#204ba2', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '0.7em', fontStyle: 'normal' }}
+            >
+              Log off
+            </button>
           </div>
-          <div className="bg-[#1a3a6b] w-16 h-10 flex items-center justify-center rounded-sm">
+          <div className="bg-[#1a3a6b] w-10 h-8 md:w-16 md:h-10 flex items-center justify-center rounded-sm">
             <span className="text-white font-bold text-xs">KIIT</span>
           </div>
         </div>
@@ -64,14 +78,14 @@ export default function PortalHeader({ activePage = 'home' }: PortalHeaderProps)
         </div>
         <div className="bg-[#fdf5e6] border border-[#f6c075] rounded px-4 py-2 flex items-center justify-center">
           <span className="text-orange-500 mr-2 text-lg">⚠️</span>
-          <span className="text-red-600 font-bold text-sm">
+          <span className="text-red-600 font-bold text-xs md:text-sm">
             You must clear your outstanding dues before the due date for a hassle free process.
           </span>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <nav className="w-full bg-[#8faecf] flex border-b border-white flex-wrap">
+      <nav className="w-full bg-[#8faecf] flex border-b border-white overflow-x-auto">
         {tabs.map((tab) => (
           <Link
             key={tab.label}
