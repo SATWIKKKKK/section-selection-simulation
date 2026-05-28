@@ -11,21 +11,27 @@ interface DifficultyCardProps {
 const CONFIG: Record<Difficulty, { title: string; desc: string; badge: string; badgeColor: string }> = {
   easy: {
     title: 'Easy',
-    desc: '60s window · bots drain 1 seat/tick',
+    desc: '15s window · relaxed bot rush',
     badge: 'Beginner',
     badgeColor: 'bg-green-100 text-green-800',
   },
   normal: {
     title: 'Normal',
-    desc: '30s window · bots drain 1–3 seats/tick',
+    desc: '10s window · standard bot rush',
     badge: 'Standard',
     badgeColor: 'bg-blue-100 text-blue-800',
   },
   hard: {
     title: 'Hard',
-    desc: '20s window · bots drain 2–5 seats/tick',
+    desc: '5s window · aggressive bot rush',
     badge: 'Exam mode',
     badgeColor: 'bg-red-100 text-red-800',
+  },
+  custom: {
+    title: 'Custom',
+    desc: 'Set your own window duration',
+    badge: 'Practice',
+    badgeColor: 'bg-purple-100 text-purple-800',
   },
 };
 

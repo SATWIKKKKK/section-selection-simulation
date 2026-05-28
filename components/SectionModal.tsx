@@ -1,11 +1,9 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useSimStore } from '@/store/simStore';
+import { useSimStore, getWindowDuration } from '@/store/simStore';
 import { SECTIONS } from '@/lib/sections';
 import ReactionTimer from './ReactionTimer';
-
-const MODAL_DURATION_SECONDS = 10;
 
 interface SectionModalProps {
   semester?: string;
@@ -14,20 +12,25 @@ interface SectionModalProps {
 }
 
 export default function SectionModal({ semester, onClose, onMissed }: SectionModalProps) {
-  const { seatCounts, claimSection, windowOpen, windowStartTime } = useSimStore();
+  const { seatCounts, claimSection, windowOpen, windowStartTime, difficulty, customWindowTime } = useSimStore();
   const [selected, setSelected] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const drainRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const modalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const drainRates = useRef<Record<string, number>>({});
 
-  // Assign each section a random drain rate once
+  const windowDuration = getWindowDuration(difficulty, customWindowTime);
+
+  // Assign each section a drain rate based on windowDuration
   useEffect(() => {
+    // Want seats to drain 1.5 to 2.5 seconds before window closes
+    const drainTime = Math.max(1, windowDuration - 2);
     SECTIONS.forEach((sec) => {
-      // Rates between 6 and 15 seats/sec — ensures most sections drain within 10s
-      drainRates.current[sec.code] = Math.floor(Math.random() * 10) + 6;
+      const seats = sec.seats || 78;
+      // Add slight randomness to rates
+      drainRates.current[sec.code] = Math.max(1, Math.ceil((seats / drainTime) * (0.8 + Math.random() * 0.4)));
     });
-  }, []);
+  }, [windowDuration]);
 
   // Bot drain logic — drain ALL sections each second
   useEffect(() => {
@@ -51,7 +54,7 @@ export default function SectionModal({ semester, onClose, onMissed }: SectionMod
       }
     }, 1000);
 
-    // 10-second hard timer — force all to 0 and trigger missed callback
+    // Hard timer — force all to 0 and trigger missed callback
     modalTimerRef.current = setTimeout(() => {
       clearInterval(drainRef.current!);
       // Force all seats to 0
@@ -66,14 +69,14 @@ export default function SectionModal({ semester, onClose, onMissed }: SectionMod
           onMissed();
         }
       }, 300);
-    }, MODAL_DURATION_SECONDS * 1000);
+    }, windowDuration * 1000);
 
     return () => {
       if (drainRef.current) clearInterval(drainRef.current);
       if (modalTimerRef.current) clearTimeout(modalTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowOpen]);
+  }, [windowOpen, windowDuration]);
 
   const handleSubmit = () => {
     if (!selected || submitted) return;

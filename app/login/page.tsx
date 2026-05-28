@@ -15,13 +15,9 @@ export default function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!userId.trim() || !password.trim()) {
-      setError('Please enter both User ID and Password.');
-      return;
-    }
     setLoading(true);
     setTimeout(() => {
-      setCredentials(userId.trim(), 'SATWIK CHANDRA');
+      setCredentials(userId.trim() || '2405900', 'Lovable Kiitians');
       router.push('/portal');
     }, 800);
   };
@@ -38,7 +34,7 @@ export default function LoginPage() {
           borderRadius: 6,
           background: 'white',
           width: '100%',
-          maxWidth: 680,
+          maxWidth: 780,
           overflow: 'hidden',
           boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
         }}
@@ -135,14 +131,14 @@ export default function LoginPage() {
                   <p style={{ fontSize: '0.75rem', color: '#cc0000', fontWeight: 600 }}>{error}</p>
                 )}
 
-                <div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
                   <button
                     type="submit"
                     disabled={loading}
                     style={{
                       background: 'linear-gradient(to bottom, #f5f5f5, #ddd)',
                       border: '1px solid #aaa',
-                      padding: '4px 20px',
+                      padding: '5px 24px',
                       fontSize: '0.85rem',
                       cursor: loading ? 'not-allowed' : 'pointer',
                       color: '#222',

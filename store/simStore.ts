@@ -14,7 +14,7 @@ export interface Attempt {
   timestamp: number;
 }
 
-export type Difficulty = 'easy' | 'normal' | 'hard';
+export type Difficulty = 'easy' | 'normal' | 'hard' | 'custom';
 
 interface SimState {
   // identity
@@ -23,7 +23,7 @@ interface SimState {
 
   // config
   difficulty: Difficulty;
-  botRushEnabled: boolean;
+  customWindowTime: number;
 
   // runtime (not persisted)
   windowOpen: boolean;
@@ -39,7 +39,8 @@ interface SimState {
   // actions
   setCredentials: (id: string, name: string) => void;
   setDifficulty: (d: Difficulty) => void;
-  toggleBotRush: () => void;
+  setCustomWindowTime: (time: number) => void;
+  logout: () => void;
   initSeats: () => void;
   openWindow: () => void;
   drainSeat: (section: string, amount: number) => void;
@@ -56,7 +57,7 @@ export const useSimStore = create<SimState>()(
       studentId: '',
       studentName: '',
       difficulty: 'normal',
-      botRushEnabled: true,
+      customWindowTime: 10,
       windowOpen: false,
       windowStartTime: null,
       seatCounts: {},
@@ -69,7 +70,9 @@ export const useSimStore = create<SimState>()(
 
       setDifficulty: (d) => set({ difficulty: d }),
 
-      toggleBotRush: () => set((s) => ({ botRushEnabled: !s.botRushEnabled })),
+      setCustomWindowTime: (time) => set({ customWindowTime: time }),
+
+      logout: () => set({ studentId: '', studentName: '' }),
 
       initSeats: () => {
         const counts: Record<string, number> = {};
@@ -158,8 +161,15 @@ export const useSimStore = create<SimState>()(
         difficulty: state.difficulty,
         studentId: state.studentId,
         studentName: state.studentName,
-        botRushEnabled: state.botRushEnabled,
+        customWindowTime: state.customWindowTime,
       }),
     }
   )
 );
+
+export function getWindowDuration(difficulty: Difficulty, customWindowTime: number): number {
+  if (difficulty === 'easy') return 15;
+  if (difficulty === 'normal') return 10;
+  if (difficulty === 'hard') return 5;
+  return Math.max(1, Math.min(30, customWindowTime || 10));
+}

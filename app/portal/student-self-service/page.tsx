@@ -43,7 +43,7 @@ export default function StudentSelfServicePage() {
               <Link key={i} href={tile.href} className="flex items-start group">
                 <SapIcon />
                 <div className="flex-grow pt-1">
-                  <span style={{ color: '#204ba2', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '0.7em', fontStyle: 'normal', textDecoration: 'underline' }}>
+                  <span style={{ color: '#204ba2', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '12px', fontStyle: 'normal', textDecoration: 'underline' }}>
                     {tile.label}
                   </span>
                   {tile.note && (
