@@ -124,6 +124,11 @@ export default function LoginPage() {
                   />
                 </div>
 
+                {/* Disclaimer */}
+                <p style={{ fontSize: '0.72rem', color: '#888', fontStyle: 'italic', marginTop: '0.25rem' }}>
+                  This is a simulation — enter any credentials to login.
+                </p>
+
                 {error && (
                   <p style={{ fontSize: '0.75rem', color: '#cc0000', fontWeight: 600 }}>{error}</p>
                 )}
