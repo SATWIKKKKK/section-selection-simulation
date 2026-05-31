@@ -74,21 +74,17 @@ Open `http://localhost:3000` in your browser.
 
 ### 1. Landing Page (`/`)
 
-A replica of the KIIT SAP portal homepage. Click "Click here to login" to proceed.
+A replica of the KIIT SAP portal homepage. Click "Click here to Login" to enter the portal.
 
-### 2. Login (`/login`)
-
-Enter your Student ID (roll number) and your name. Both are stored locally via Zustand persist (no server, no account required). Click "Log On" to enter the portal.
-
-### 3. Portal Home (`/portal`)
+### 2. Portal Home (`/portal`)
 
 Replica of the SAP portal overview screen. Navigate via the header tabs or sidebar.
 
-### 4. Student Self Service (`/portal/student-self-service`)
+### 3. Student Self Service (`/portal/student-self-service`)
 
 Tile grid replicating the self-service module. Click the section selection tile to enter the simulation.
 
-### 5. Section Selection (`/portal/section-selection`)
+### 4. Section Selection (`/portal/section-selection`)
 
 This is the core of the simulator. The flow is:
 
@@ -103,7 +99,7 @@ This is the core of the simulator. The flow is:
    - If submitted in time: you are taken to the Result page with your reaction time and grade.
    - If time runs out: a popup informs you that a random section will be assigned, then takes you to the Result page.
 
-### 6. Result (`/result`)
+### 5. Result (`/result`)
 
 Shows the outcome of the latest attempt:
 
