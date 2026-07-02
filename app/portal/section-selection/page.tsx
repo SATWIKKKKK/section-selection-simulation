@@ -158,12 +158,9 @@ export default function SectionSelectionPage() {
 
     const syncClock = () => {
       const now = Date.now();
-      setClockNow(now);
-      if (now >= opensAt) {
-        setWaitReady(true);
-        setPanelRefreshing(false);
-        clearStoredOpeningWait();
-      }
+      // Reaching 00:00 must not unlock the selection automatically. Keep the
+      // stored opening time so a panel or browser reload can verify it first.
+      setClockNow(Math.min(now, opensAt));
     };
 
     syncClock();
@@ -255,7 +252,7 @@ export default function SectionSelectionPage() {
   };
 
   const handlePanelReload = () => {
-    if (openingMode !== 'wait' || !waitStarted || waitReady || panelRefreshing) return;
+    if (openingMode !== 'wait' || !waitStarted || waitReady || !opensAt || panelRefreshing) return;
 
     setPanelRefreshing(true);
     if (panelReloadTimerRef.current) clearTimeout(panelReloadTimerRef.current);
@@ -264,6 +261,10 @@ export default function SectionSelectionPage() {
       setClockNow(now);
       setLastRefreshedAt(now);
       setPanelRefreshing(false);
+      if (now >= opensAt) {
+        setWaitReady(true);
+        clearStoredOpeningWait();
+      }
     }, 450);
   };
 
