@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import CountdownTimer from '@/components/CountdownTimer';
+import OpeningCountdown from '@/components/OpeningCountdown';
 import PortalHeader from '@/components/PortalHeader';
 import PortalSidebar from '@/components/PortalSidebar';
 import SimulationSettingsControls from '@/components/SimulationSettingsControls';
@@ -15,6 +16,22 @@ import type { SelectionDetail } from '@/store/simStore';
 const SectionModal = dynamic(() => import('@/components/SectionModal'), { ssr: false });
 
 const COUNTDOWN_SECONDS = 10;
+const OPENING_WAIT_STORAGE_KEY = 'kiit-opening-wait-v1';
+const WAIT_MINUTE_OPTIONS = [1, 2, 5] as const;
+
+type OpeningMode = 'instant' | 'wait' | null;
+
+interface StoredOpeningWait {
+  opensAt: number;
+  durationMs: number;
+  waitMinutes: number;
+}
+
+function clearStoredOpeningWait() {
+  if (typeof window !== 'undefined') {
+    window.sessionStorage.removeItem(OPENING_WAIT_STORAGE_KEY);
+  }
+}
 
 const FIFTH_SEMESTER_ROWS: Array<{
   kind: SelectionKind;
@@ -71,8 +88,24 @@ export default function SectionSelectionPage() {
   const [modalVisible, setModalVisible] = useState(false);
   const [failedPopupVisible, setFailedPopupVisible] = useState(false);
   const [timeoutAllotment, setTimeoutAllotment] = useState<SelectionDetail | null>(null);
+  const [openingMode, setOpeningMode] = useState<OpeningMode>(null);
+  const [waitMinutes, setWaitMinutes] = useState(1);
+  const [customWaitSelected, setCustomWaitSelected] = useState(false);
+  const [waitStarted, setWaitStarted] = useState(false);
+  const [waitReady, setWaitReady] = useState(false);
+  const [opensAt, setOpensAt] = useState<number | null>(null);
+  const [waitDurationMs, setWaitDurationMs] = useState(0);
+  const [clockNow, setClockNow] = useState(0);
+  const [panelRefreshing, setPanelRefreshing] = useState(false);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<number | null>(null);
   const missedRef = useRef(false);
   const sessionActiveRef = useRef(false);
+  const panelReloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const selectionAccessOpen = semester === '5th' && (
+    openingMode === 'instant' ||
+    (openingMode === 'wait' && waitStarted && waitReady)
+  );
+  const waitRemainingMs = opensAt ? Math.max(0, opensAt - clockNow) : 0;
 
   useEffect(() => {
     resetRound();
@@ -80,6 +113,75 @@ export default function SectionSelectionPage() {
     missedRef.current = false;
     sessionActiveRef.current = false;
   }, [initSeats, resetRound]);
+
+  useEffect(() => {
+    const restoreTimer = setTimeout(() => {
+      const storedWait = window.sessionStorage.getItem(OPENING_WAIT_STORAGE_KEY);
+      if (!storedWait) return;
+
+      try {
+        const parsed = JSON.parse(storedWait) as StoredOpeningWait;
+        if (
+          !Number.isFinite(parsed.opensAt) ||
+          !Number.isFinite(parsed.durationMs) ||
+          !Number.isFinite(parsed.waitMinutes)
+        ) {
+          clearStoredOpeningWait();
+          return;
+        }
+
+        const now = Date.now();
+        setSemester('5th');
+        setOpeningMode('wait');
+        setWaitMinutes(parsed.waitMinutes);
+        setCustomWaitSelected(!WAIT_MINUTE_OPTIONS.includes(parsed.waitMinutes as 1 | 2 | 5));
+        setWaitStarted(true);
+        setOpensAt(parsed.opensAt);
+        setWaitDurationMs(parsed.durationMs);
+        setClockNow(now);
+        setLastRefreshedAt(now);
+        setWaitReady(now >= parsed.opensAt);
+
+        if (now >= parsed.opensAt) {
+          clearStoredOpeningWait();
+        }
+      } catch {
+        clearStoredOpeningWait();
+      }
+    }, 0);
+
+    return () => clearTimeout(restoreTimer);
+  }, []);
+
+  useEffect(() => {
+    if (openingMode !== 'wait' || !waitStarted || waitReady || !opensAt) return;
+
+    const syncClock = () => {
+      const now = Date.now();
+      setClockNow(now);
+      if (now >= opensAt) {
+        setWaitReady(true);
+        setPanelRefreshing(false);
+        clearStoredOpeningWait();
+      }
+    };
+
+    syncClock();
+    const interval = setInterval(syncClock, 250);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') syncClock();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [openingMode, opensAt, waitReady, waitStarted]);
+
+  useEffect(() => () => {
+    if (panelReloadTimerRef.current) clearTimeout(panelReloadTimerRef.current);
+  }, []);
 
   useEffect(() => {
     setModalVisible(windowOpen);
@@ -101,12 +203,80 @@ export default function SectionSelectionPage() {
   }, [router, selectedElective2, selectedSection, semester]);
 
   const handleSemesterSelection = (selectedSemester: string) => {
+    clearStoredOpeningWait();
     resetRound();
     initSeats();
     setActiveSelection(null);
     setFailedPopupVisible(false);
     setTimeoutAllotment(null);
+    setOpeningMode(null);
+    setWaitMinutes(1);
+    setCustomWaitSelected(false);
+    setWaitStarted(false);
+    setWaitReady(false);
+    setOpensAt(null);
+    setWaitDurationMs(0);
+    setPanelRefreshing(false);
+    setLastRefreshedAt(null);
     setSemester(selectedSemester);
+  };
+
+  const handleOpeningModeSelection = (mode: Exclude<OpeningMode, null>) => {
+    clearStoredOpeningWait();
+    setOpeningMode(mode);
+    setWaitStarted(false);
+    setWaitReady(false);
+    setOpensAt(null);
+    setWaitDurationMs(0);
+    setClockNow(Date.now());
+    setPanelRefreshing(false);
+    setLastRefreshedAt(null);
+  };
+
+  const handleStartOpeningWait = () => {
+    const normalizedMinutes = Math.max(1, Math.min(30, waitMinutes || 1));
+    const durationMs = normalizedMinutes * 60 * 1000;
+    const now = Date.now();
+    const target = now + durationMs;
+    const storedWait: StoredOpeningWait = {
+      opensAt: target,
+      durationMs,
+      waitMinutes: normalizedMinutes,
+    };
+
+    window.sessionStorage.setItem(OPENING_WAIT_STORAGE_KEY, JSON.stringify(storedWait));
+    setWaitMinutes(normalizedMinutes);
+    setWaitDurationMs(durationMs);
+    setOpensAt(target);
+    setClockNow(now);
+    setLastRefreshedAt(now);
+    setWaitReady(false);
+    setWaitStarted(true);
+  };
+
+  const handlePanelReload = () => {
+    if (openingMode !== 'wait' || !waitStarted || waitReady || panelRefreshing) return;
+
+    setPanelRefreshing(true);
+    if (panelReloadTimerRef.current) clearTimeout(panelReloadTimerRef.current);
+    panelReloadTimerRef.current = setTimeout(() => {
+      const now = Date.now();
+      setClockNow(now);
+      setLastRefreshedAt(now);
+      setPanelRefreshing(false);
+    }, 450);
+  };
+
+  const handleCancelOpeningWait = () => {
+    clearStoredOpeningWait();
+    if (panelReloadTimerRef.current) clearTimeout(panelReloadTimerRef.current);
+    setOpeningMode(null);
+    setWaitStarted(false);
+    setWaitReady(false);
+    setOpensAt(null);
+    setWaitDurationMs(0);
+    setPanelRefreshing(false);
+    setLastRefreshedAt(null);
   };
 
   const handleCountdownComplete = useCallback(() => {
@@ -122,7 +292,12 @@ export default function SectionSelectionPage() {
   };
 
   const handleStartSelection = (kind: SelectionKind) => {
-    if (semester !== '5th' || !isSelectionUnlocked(kind) || windowOpen) return;
+    if (
+      semester !== '5th' ||
+      !selectionAccessOpen ||
+      !isSelectionUnlocked(kind) ||
+      windowOpen
+    ) return;
     setActiveSelection(kind);
     initSelection(kind);
     openWindow();
@@ -271,76 +446,250 @@ export default function SectionSelectionPage() {
                   </span>
                 </div>
 
-                <div className="bg-white border border-gray-300 rounded-sm shadow-sm overflow-hidden mb-4">
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[940px] text-xs border-collapse">
-                      <thead>
-                        <tr className="bg-[#e8edf2] text-[#003366]">
-                          <th className="border border-gray-300 px-3 py-2 text-left">Object abbr.</th>
-                          <th className="border border-gray-300 px-3 py-2 text-left">Name</th>
-                          <th className="border border-gray-300 px-3 py-2 text-left">Acad. Year</th>
-                          <th className="border border-gray-300 px-3 py-2 text-left">Acad. Session</th>
-                          <th className="border border-gray-300 px-3 py-2 text-left">Status</th>
-                          <th className="border border-gray-300 px-3 py-2 text-left">Section Name / Elective Name</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {FIFTH_SEMESTER_ROWS.map((row, index) => {
-                          const selectedValue = selectedValues[row.kind];
-                          const selectionDetail = selectionDetails.find(
-                            (selection) => selection.kind === row.kind
-                          );
-                          const unlocked = isSelectionUnlocked(row.kind);
-                          const isLocked = !unlocked && !selectedValue;
-
-                          return (
-                            <tr key={row.kind} className={index % 2 === 0 ? 'bg-white' : 'bg-[#f7f9fb]'}>
-                              <td className="border border-gray-300 px-3 py-2 font-semibold whitespace-nowrap">{row.objectAbbr}</td>
-                              <td className="border border-gray-300 px-3 py-2">{row.name}</td>
-                              <td className="border border-gray-300 px-3 py-2 whitespace-nowrap">2026-2027</td>
-                              <td className="border border-gray-300 px-3 py-2">Autumn</td>
-                              <td className="border border-gray-300 px-3 py-2 whitespace-nowrap">
-                                {selectedValue ? (
-                                  <span className={`font-bold ${
-                                    selectionDetail?.randomlyAllotted ? 'text-amber-700' : 'text-green-700'
-                                  }`}>
-                                    {selectionDetail?.randomlyAllotted ? 'Randomly Allotted' : 'Selected'}
-                                  </span>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    disabled={isLocked || windowOpen}
-                                    onClick={() => handleStartSelection(row.kind)}
-                                    title={isLocked ? 'Complete the previous selection first' : `Start ${SELECTION_LABELS[row.kind]}`}
-                                    className={`px-3 py-1 border rounded-sm font-bold ${
-                                      isLocked || windowOpen
-                                        ? 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'
-                                        : 'border-[#3f688e] text-[#003366] hover:bg-[#e7f0f8]'
-                                    }`}
-                                  >
-                                    {isLocked ? 'Locked' : 'Click Here'}
-                                  </button>
-                                )}
-                              </td>
-                              <td className="border border-gray-300 px-3 py-2 font-semibold text-[#003366]">
-                                {selectedValue ?? <span className="font-normal text-gray-400">—</span>}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                {!openingMode && (
+                  <div className="bg-white border border-gray-300 rounded-sm p-5 mb-4 shadow-sm">
+                    <h3 className="text-sm font-bold text-[#003366] mb-1">Choose how the selection portal should open</h3>
+                    <p className="text-xs text-gray-600 mb-4">
+                      Instant mode keeps the current flow. Opening Wait Simulation lets you practise refreshing before a user-defined opening time.
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={() => handleOpeningModeSelection('instant')}
+                        className="border border-[#3f688e] rounded-sm p-4 text-left hover:bg-[#edf4fa] transition"
+                      >
+                        <span className="block text-sm font-bold text-[#003366]">Instant Mode</span>
+                        <span className="block text-xs text-gray-600 mt-1">Show the first Click Here button immediately.</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpeningModeSelection('wait')}
+                        className="border border-[#3f688e] rounded-sm p-4 text-left hover:bg-[#edf4fa] transition"
+                      >
+                        <span className="block text-sm font-bold text-[#003366]">Opening Wait Simulation</span>
+                        <span className="block text-xs text-gray-600 mt-1">Choose a delay, watch the countdown, and practise panel reloads.</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {openingMode === 'wait' && !waitStarted && (
+                  <div className="bg-white border border-gray-300 rounded-sm p-5 mb-4 shadow-sm">
+                    <h3 className="text-sm font-bold text-[#003366] mb-1">Set the opening delay</h3>
+                    <p className="text-xs text-gray-600 mb-4">
+                      The delay starts when you click Start Waiting. It is independent of the timed selection windows.
+                    </p>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {WAIT_MINUTE_OPTIONS.map((minutes) => (
+                        <button
+                          key={minutes}
+                          type="button"
+                          aria-pressed={!customWaitSelected && waitMinutes === minutes}
+                          onClick={() => {
+                            setCustomWaitSelected(false);
+                            setWaitMinutes(minutes);
+                          }}
+                          className={`px-4 py-2 text-xs font-bold border rounded-sm ${
+                            !customWaitSelected && waitMinutes === minutes
+                              ? 'border-[#003366] bg-[#dceaf5] text-[#003366]'
+                              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {minutes} {minutes === 1 ? 'minute' : 'minutes'}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        aria-pressed={customWaitSelected}
+                        onClick={() => setCustomWaitSelected(true)}
+                        className={`px-4 py-2 text-xs font-bold border rounded-sm ${
+                          customWaitSelected
+                            ? 'border-[#003366] bg-[#dceaf5] text-[#003366]'
+                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        Custom
+                      </button>
+                    </div>
+
+                    {customWaitSelected && (
+                      <label className="block max-w-xs text-xs font-bold text-[#003366] mb-4">
+                        Custom delay (1–30 minutes)
+                        <input
+                          type="number"
+                          min={1}
+                          max={30}
+                          value={waitMinutes}
+                          onChange={(event) => setWaitMinutes(Number(event.target.value) || 1)}
+                          className="mt-1 block w-full border border-gray-300 px-3 py-2 text-xs font-normal text-gray-800"
+                        />
+                      </label>
+                    )}
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={handleStartOpeningWait}
+                        className="px-5 py-2 text-xs font-bold text-white bg-[#3f688e] border border-[#2f5475] rounded-sm hover:bg-[#345b7d]"
+                      >
+                        Start Waiting
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelOpeningWait}
+                        className="px-5 py-2 text-xs font-bold text-gray-700 bg-white border border-gray-300 rounded-sm hover:bg-gray-50"
+                      >
+                        Back to Opening Modes
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {openingMode === 'instant' && !selectedSection && (
+                  <div className="flex items-center justify-between gap-3 bg-[#eef7ee] border border-green-300 rounded-sm px-4 py-3 mb-4 text-xs">
+                    <span className="font-bold text-green-800">Instant Mode — selection is open now.</span>
+                    <button
+                      type="button"
+                      onClick={handleCancelOpeningWait}
+                      className="font-bold text-[#003366] underline"
+                    >
+                      Change mode
+                    </button>
+                  </div>
+                )}
+
+                {panelRefreshing ? (
+                  <div
+                    data-testid="selection-panel-skeleton"
+                    role="status"
+                    aria-label="Reloading selection panel"
+                    className="bg-white border border-gray-300 rounded-sm p-5 mb-4 shadow-sm animate-pulse"
+                  >
+                    <div className="h-4 w-48 bg-gray-200 rounded mb-4" />
+                    <div className="h-12 w-56 bg-gray-200 rounded mx-auto mb-5" />
+                    <div className="space-y-2">
+                      <div className="h-9 bg-gray-200 rounded" />
+                      <div className="h-9 bg-gray-100 rounded" />
+                      <div className="h-9 bg-gray-200 rounded" />
+                    </div>
+                    <span className="sr-only">Reloading selection panel…</span>
+                  </div>
+                ) : (
+                  <>
+                    {openingMode === 'wait' && waitStarted && opensAt && !waitReady && (
+                      <div className="bg-white border border-gray-300 rounded-sm p-6 mb-4 shadow-sm">
+                        <OpeningCountdown
+                          remainingMs={waitRemainingMs}
+                          totalDurationMs={waitDurationMs}
+                          opensAt={opensAt}
+                        />
+                        <div className="mt-5 flex flex-wrap justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handlePanelReload}
+                            className="px-5 py-2 text-xs font-bold text-[#003366] bg-[#eef4f8] border border-[#3f688e] rounded-sm hover:bg-[#e0ebf3]"
+                          >
+                            Reload Selection Panel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelOpeningWait}
+                            className="px-5 py-2 text-xs font-bold text-red-700 bg-white border border-red-300 rounded-sm hover:bg-red-50"
+                          >
+                            Cancel Waiting
+                          </button>
+                        </div>
+                        {lastRefreshedAt && (
+                          <p className="mt-3 text-center text-[11px] text-gray-500">
+                            Panel last refreshed at {new Date(lastRefreshedAt).toLocaleTimeString()}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {openingMode === 'wait' && waitStarted && waitReady && (
+                      <div className="bg-[#eef7ee] border border-green-300 rounded-sm px-4 py-3 mb-4 text-xs font-bold text-green-800">
+                        Selection is open. Click Here when you are ready; no popup will open automatically.
+                      </div>
+                    )}
+
+                    {(openingMode === 'instant' || (openingMode === 'wait' && waitStarted)) && (
+                      <div className="bg-white border border-gray-300 rounded-sm shadow-sm overflow-hidden mb-4">
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-[940px] text-xs border-collapse">
+                            <thead>
+                              <tr className="bg-[#e8edf2] text-[#003366]">
+                                <th className="border border-gray-300 px-3 py-2 text-left">Object abbr.</th>
+                                <th className="border border-gray-300 px-3 py-2 text-left">Name</th>
+                                <th className="border border-gray-300 px-3 py-2 text-left">Acad. Year</th>
+                                <th className="border border-gray-300 px-3 py-2 text-left">Acad. Session</th>
+                                <th className="border border-gray-300 px-3 py-2 text-left">Status</th>
+                                <th className="border border-gray-300 px-3 py-2 text-left">Section Name / Elective Name</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {FIFTH_SEMESTER_ROWS.map((row, index) => {
+                                const selectedValue = selectedValues[row.kind];
+                                const selectionDetail = selectionDetails.find(
+                                  (selection) => selection.kind === row.kind
+                                );
+                                const unlocked = isSelectionUnlocked(row.kind);
+                                const isLocked = !unlocked && !selectedValue;
+
+                                return (
+                                  <tr key={row.kind} className={index % 2 === 0 ? 'bg-white' : 'bg-[#f7f9fb]'}>
+                                    <td className="border border-gray-300 px-3 py-2 font-semibold whitespace-nowrap">{row.objectAbbr}</td>
+                                    <td className="border border-gray-300 px-3 py-2">{row.name}</td>
+                                    <td className="border border-gray-300 px-3 py-2 whitespace-nowrap">2026-2027</td>
+                                    <td className="border border-gray-300 px-3 py-2">Autumn</td>
+                                    <td className="border border-gray-300 px-3 py-2 whitespace-nowrap">
+                                      {!selectionAccessOpen ? (
+                                        <span className="font-bold text-gray-500">Not Open Yet</span>
+                                      ) : selectedValue ? (
+                                        <span className={`font-bold ${
+                                          selectionDetail?.randomlyAllotted ? 'text-amber-700' : 'text-green-700'
+                                        }`}>
+                                          {selectionDetail?.randomlyAllotted ? 'Randomly Allotted' : 'Selected'}
+                                        </span>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          disabled={isLocked || windowOpen}
+                                          onClick={() => handleStartSelection(row.kind)}
+                                          title={isLocked ? 'Complete the previous selection first' : `Start ${SELECTION_LABELS[row.kind]}`}
+                                          className={`px-3 py-1 border rounded-sm font-bold ${
+                                            isLocked || windowOpen
+                                              ? 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'
+                                              : 'border-[#3f688e] text-[#003366] hover:bg-[#e7f0f8]'
+                                          }`}
+                                        >
+                                          {isLocked ? 'Locked' : 'Click Here'}
+                                        </button>
+                                      )}
+                                    </td>
+                                    <td className="border border-gray-300 px-3 py-2 font-semibold text-[#003366]">
+                                      {selectedValue ?? <span className="font-normal text-gray-400">—</span>}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
 
                 <div className="bg-white border border-gray-300 rounded-sm p-4 text-xs text-gray-700 space-y-1 shadow-sm">
                   <p className="font-bold text-[#003366] mb-2" style={{ fontSize: 11 }}>Instructions:</p>
-                  <p>1. Click the first available “Click Here” button to start that selection. Popups do not open automatically.</p>
-                  <p>2. Each popup remains open for {selectionWindowSeconds}s, using the duration selected above.</p>
-                  <p>3. For electives, select the full subject first, then choose its abbreviated numbered section before Submit becomes available.</p>
-                  <p>4. Submit confirms your choice. Closing or missing the timer causes an immediate, final random allotment with no retry.</p>
-                  <p>5. Elective 1 unlocks after the section row is completed; Elective 2 unlocks after Elective 1.</p>
-                  <p>6. The result page opens after all three rows are either submitted or randomly allotted.</p>
+                  <p>1. Choose Instant Mode or the optional Opening Wait Simulation.</p>
+                  <p>2. Waiting-mode panel reloads preserve the absolute opening time; Click Here remains hidden until the countdown ends.</p>
+                  <p>3. Click the first available “Click Here” button to start that selection. Popups do not open automatically.</p>
+                  <p>4. Each popup remains open for {selectionWindowSeconds}s, using the duration selected above.</p>
+                  <p>5. For electives, select the full subject first, then choose its abbreviated numbered section before Submit becomes available.</p>
+                  <p>6. Submit confirms your choice. Closing or missing the timer causes an immediate, final random allotment with no retry.</p>
+                  <p>7. Each completed row unlocks the next; results open after all three rows are complete.</p>
                 </div>
               </>
             )}
