@@ -10,6 +10,7 @@ import PortalSidebar from '@/components/PortalSidebar';
 import SimulationSettingsControls from '@/components/SimulationSettingsControls';
 import type { SelectionKind } from '@/lib/sections';
 import { getWindowDuration, useSimStore } from '@/store/simStore';
+import type { SelectionDetail } from '@/store/simStore';
 
 const SectionModal = dynamic(() => import('@/components/SectionModal'), { ssr: false });
 
@@ -56,6 +57,10 @@ export default function SectionSelectionPage() {
     selectedSection,
     selectedElective1,
     selectedElective2,
+    selectedElective1Section,
+    selectedElective2Section,
+    selectionDetails,
+    randomlyAllotFifthSelection,
     resetRound,
     missedWindow,
   } = useSimStore();
@@ -65,6 +70,7 @@ export default function SectionSelectionPage() {
   const [activeSelection, setActiveSelection] = useState<SelectionKind | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [failedPopupVisible, setFailedPopupVisible] = useState(false);
+  const [timeoutAllotment, setTimeoutAllotment] = useState<SelectionDetail | null>(null);
   const missedRef = useRef(false);
   const sessionActiveRef = useRef(false);
 
@@ -99,6 +105,7 @@ export default function SectionSelectionPage() {
     initSeats();
     setActiveSelection(null);
     setFailedPopupVisible(false);
+    setTimeoutAllotment(null);
     setSemester(selectedSemester);
   };
 
@@ -127,14 +134,22 @@ export default function SectionSelectionPage() {
     setFailedPopupVisible(true);
 
     if (semester === '5th') {
+      if (activeSelection) {
+        setTimeoutAllotment(randomlyAllotFifthSelection(activeSelection));
+      }
       closeWindow();
       return;
     }
 
     missedWindow();
-  }, [closeWindow, missedWindow, semester]);
+  }, [activeSelection, closeWindow, missedWindow, randomlyAllotFifthSelection, semester]);
 
   const handleModalClose = () => {
+    if (semester === '5th') {
+      handleModalMissed();
+      return;
+    }
+
     setModalVisible(false);
     closeWindow();
     setActiveSelection(null);
@@ -149,9 +164,15 @@ export default function SectionSelectionPage() {
     setFailedPopupVisible(false);
 
     if (semester === '5th') {
+      const completedSelection = activeSelection;
       missedRef.current = false;
       sessionActiveRef.current = false;
       setActiveSelection(null);
+      setTimeoutAllotment(null);
+
+      if (completedSelection === 'elective2' && selectedElective2) {
+        router.push('/result');
+      }
       return;
     }
 
@@ -160,8 +181,12 @@ export default function SectionSelectionPage() {
 
   const selectedValues: Record<SelectionKind, string | null> = {
     section: selectedSection,
-    elective1: selectedElective1,
-    elective2: selectedElective2,
+    elective1: selectedElective1
+      ? `${selectedElective1}${selectedElective1Section ? ` — ${selectedElective1Section}` : ''}`
+      : null,
+    elective2: selectedElective2
+      ? `${selectedElective2}${selectedElective2Section ? ` — ${selectedElective2Section}` : ''}`
+      : null,
   };
 
   return (
@@ -262,6 +287,9 @@ export default function SectionSelectionPage() {
                       <tbody>
                         {FIFTH_SEMESTER_ROWS.map((row, index) => {
                           const selectedValue = selectedValues[row.kind];
+                          const selectionDetail = selectionDetails.find(
+                            (selection) => selection.kind === row.kind
+                          );
                           const unlocked = isSelectionUnlocked(row.kind);
                           const isLocked = !unlocked && !selectedValue;
 
@@ -273,7 +301,11 @@ export default function SectionSelectionPage() {
                               <td className="border border-gray-300 px-3 py-2">Autumn</td>
                               <td className="border border-gray-300 px-3 py-2 whitespace-nowrap">
                                 {selectedValue ? (
-                                  <span className="font-bold text-green-700">Selected</span>
+                                  <span className={`font-bold ${
+                                    selectionDetail?.randomlyAllotted ? 'text-amber-700' : 'text-green-700'
+                                  }`}>
+                                    {selectionDetail?.randomlyAllotted ? 'Randomly Allotted' : 'Selected'}
+                                  </span>
                                 ) : (
                                   <button
                                     type="button"
@@ -305,8 +337,10 @@ export default function SectionSelectionPage() {
                   <p className="font-bold text-[#003366] mb-2" style={{ fontSize: 11 }}>Instructions:</p>
                   <p>1. Click the first available “Click Here” button to start that selection. Popups do not open automatically.</p>
                   <p>2. Each popup remains open for {selectionWindowSeconds}s, using the duration selected above.</p>
-                  <p>3. Elective 1 unlocks after section selection; Elective 2 unlocks after Elective 1.</p>
-                  <p>4. The result page opens only after all three selections have been submitted.</p>
+                  <p>3. For electives, select the full subject first, then choose its abbreviated numbered section before Submit becomes available.</p>
+                  <p>4. Submit confirms your choice. Closing or missing the timer causes an immediate, final random allotment with no retry.</p>
+                  <p>5. Elective 1 unlocks after the section row is completed; Elective 2 unlocks after Elective 1.</p>
+                  <p>6. The result page opens after all three rows are either submitted or randomly allotted.</p>
                 </div>
               </>
             )}
@@ -340,12 +374,12 @@ export default function SectionSelectionPage() {
               className="px-3 py-1.5 flex items-center gap-2 text-white text-xs font-bold"
               style={{ background: 'linear-gradient(to bottom, #10638e, #0d4d70)' }}
             >
-              <span>Information</span>
+              <span>{semester === '5th' ? 'Allotment Result' : 'Information'}</span>
             </div>
             <div className="p-5">
               <p className="text-sm text-gray-800 leading-relaxed mb-5">
                 {semester === '5th'
-                  ? `You did not complete ${activeSelection ? SELECTION_LABELS[activeSelection] : 'the selection'} within the allotted time. Click OK, then use Click Here to try this selection again.`
+                  ? `You were unable to select your desired ${activeSelection === 'section' ? 'section' : 'elective'} within the allotted time. Your ${activeSelection === 'section' ? 'section' : 'elective'} has been randomly allotted as ${timeoutAllotment ? `${timeoutAllotment.value}${timeoutAllotment.numberedSection ? ` — ${timeoutAllotment.numberedSection}` : ''}` : 'an available choice'}. This allotment is final; please continue to the next selection.`
                   : 'You have failed to choose any section within allotted time. You will receive a random section allotted to your name.'}
               </p>
               <div className="flex justify-center">
@@ -355,7 +389,7 @@ export default function SectionSelectionPage() {
                   className="px-6 py-1 text-sm font-bold border border-[#aaa] transition rounded-sm"
                   style={{ background: 'linear-gradient(to bottom, #ffffff, #e0e0e0)' }}
                 >
-                  OK
+                  {semester === '5th' ? 'Continue' : 'OK'}
                 </button>
               </div>
             </div>

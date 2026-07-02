@@ -4,6 +4,11 @@ export interface Section {
   facultyName: string;
 }
 
+export interface ElectiveOption extends Section {
+  abbreviation: string;
+  groupCount: number;
+}
+
 export type SelectionKind = 'section' | 'elective1' | 'elective2';
 
 const facultyNames = [
@@ -22,28 +27,69 @@ export const SECTIONS: Section[] = Array.from({ length: 61 }, (_, i) => ({
   facultyName: facultyNames[i % facultyNames.length],
 }));
 
-export const ELECTIVE_1_OPTIONS: Section[] = [
+export const ELECTIVE_1_OPTIONS: ElectiveOption[] = [
   {
     code: 'High Performance Computing',
     seats: 78,
     facultyName: 'Elective 1',
+    abbreviation: 'HPC',
+    groupCount: 23,
   },
   {
     code: 'Distributed Operating Systems',
     seats: 78,
     facultyName: 'Elective 1',
+    abbreviation: 'DOS',
+    groupCount: 22,
   },
 ];
 
-export const ELECTIVE_2_OPTIONS: Section[] = [
-  { code: 'Compiler', seats: 78, facultyName: 'Elective 2' },
-  { code: 'Data Mining & Data Warehousing', seats: 78, facultyName: 'Elective 2' },
-  { code: 'Privacy and Security in IoT', seats: 78, facultyName: 'Elective 2' },
-  { code: 'Computational Intelligence', seats: 78, facultyName: 'Elective 2' },
+export const ELECTIVE_2_OPTIONS: ElectiveOption[] = [
+  {
+    code: 'Compiler Design',
+    seats: 78,
+    facultyName: 'Elective 2',
+    abbreviation: 'CD',
+    groupCount: 14,
+  },
+  {
+    code: 'Data Mining & Data Warehousing',
+    seats: 78,
+    facultyName: 'Elective 2',
+    abbreviation: 'DMDW',
+    groupCount: 20,
+  },
+  {
+    code: 'Privacy and Security in IoT',
+    seats: 78,
+    facultyName: 'Elective 2',
+    abbreviation: 'PSIOT',
+    groupCount: 1,
+  },
+  {
+    code: 'Computational Intelligence',
+    seats: 78,
+    facultyName: 'Elective 2',
+    abbreviation: 'CI',
+    groupCount: 10,
+  },
 ];
 
 export function getSelectionOptions(kind: SelectionKind): Section[] {
   if (kind === 'elective1') return ELECTIVE_1_OPTIONS;
   if (kind === 'elective2') return ELECTIVE_2_OPTIONS;
   return SECTIONS;
+}
+
+export function getElectiveNumberedSections(electiveName: string): string[] {
+  const elective = [...ELECTIVE_1_OPTIONS, ...ELECTIVE_2_OPTIONS].find(
+    (option) => option.code === electiveName
+  );
+
+  if (!elective) return [];
+
+  return Array.from(
+    { length: elective.groupCount },
+    (_, index) => `${elective.abbreviation}-${index + 1}`
+  );
 }

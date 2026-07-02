@@ -94,9 +94,10 @@ This is the core of the simulator. The flow is:
 4. **5th semester**: A subject table is shown and no popup opens automatically. The student clicks each enabled `Click Here` button to complete, in order:
    - Section selection from 61 sections
    - Elective 1 from High Performance Computing or Distributed Operating Systems
-   - Elective 2 from Compiler, Data Mining & Data Warehousing, Privacy and Security in IoT, or Computational Intelligence
-5. **Timing and gating**: Every clicked selection receives the configured difficulty duration. Elective 1 unlocks only after the section is submitted, and Elective 2 unlocks only after Elective 1 is submitted.
-6. **Outcome**: The 5th-semester flow redirects to the Result page only after all three selections are complete, where every choice and individual reaction time is displayed.
+   - Elective 2 from Compiler Design, Data Mining & Data Warehousing, Privacy and Security in IoT, or Computational Intelligence
+5. **Elective numbered sections**: Choosing an elective reveals its abbreviated numbered-section dropdown (HPC-1–23, DOS-1–22, CD-1–14, DMDW-1–20, PSIOT-1, or CI-1–10). Submit stays disabled until both choices are made.
+6. **One-shot timing and gating**: Every clicked selection receives the configured difficulty duration. Submit confirms the choice; closing or missing the window causes a final random allotment with no retry. Each completed row unlocks the next row.
+7. **Outcome**: The 5th-semester flow redirects to the Result page only after all three selections are submitted or randomly allotted. Results identify each numbered section and whether it was submitted or random.
 
 ### 5. Result (`/result`)
 

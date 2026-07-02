@@ -64,8 +64,16 @@ export default function AttemptHistoryTable({ attempts }: AttemptHistoryTablePro
                   {a.section ?? <span className="text-red-500">Missed</span>}
                 </td>
                 <td className="px-2 py-1 whitespace-nowrap">{a.semester ?? '3rd'}</td>
-                <td className="px-2 py-1 min-w-40">{a.elective1 ?? '—'}</td>
-                <td className="px-2 py-1 min-w-40">{a.elective2 ?? '—'}</td>
+                <td className="px-2 py-1 min-w-40">
+                  {a.elective1
+                    ? `${a.elective1}${a.elective1Section ? ` — ${a.elective1Section}` : ''}`
+                    : '—'}
+                </td>
+                <td className="px-2 py-1 min-w-40">
+                  {a.elective2
+                    ? `${a.elective2}${a.elective2Section ? ` — ${a.elective2Section}` : ''}`
+                    : '—'}
+                </td>
                 <td className="px-2 py-1 font-mono tabular-nums">
                   {a.section ? (a.reactionMs / 1000).toFixed(2) + 's' : '—'}
                 </td>

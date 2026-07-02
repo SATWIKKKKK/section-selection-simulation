@@ -25,6 +25,9 @@ export default function ResultPage() {
   const missed = latest.section === null;
   const semester = latest.semester ?? '3rd';
   const isFifthSemester = semester === '5th';
+  const hasRandomAllotment = Boolean(
+    latest.selectionDetails?.some((selection) => selection.randomlyAllotted)
+  );
   const reactionSec = missed ? null : latest.reactionMs / 1000;
   const grade = latest.grade;
 
@@ -83,8 +86,12 @@ export default function ResultPage() {
                       {missed ? (
                         <span className="text-red-700 font-bold">Failed — no section selected in time</span>
                       ) : (
-                        <span className="text-green-700 font-bold">
-                          {isFifthSemester ? 'All selections completed' : 'Section Secured'}
+                        <span className={`font-bold ${hasRandomAllotment ? 'text-amber-700' : 'text-green-700'}`}>
+                          {isFifthSemester
+                            ? hasRandomAllotment
+                              ? 'Completed with random allotment'
+                              : 'All selections completed'
+                            : 'Section Secured'}
                         </span>
                       )}
                     </td>
@@ -103,11 +110,17 @@ export default function ResultPage() {
                     <>
                       <tr className="border-b border-gray-200">
                         <td className="px-4 py-2 font-bold text-[#003366]">Elective 1</td>
-                        <td className="px-4 py-2 font-bold text-[#003366]">{latest.elective1}</td>
+                        <td className="px-4 py-2 font-bold text-[#003366]">
+                          {latest.elective1}
+                          {latest.elective1Section ? ` — ${latest.elective1Section}` : ''}
+                        </td>
                       </tr>
                       <tr className="bg-[#f7f9fb] border-b border-gray-200">
                         <td className="px-4 py-2 font-bold text-[#003366]">Elective 2</td>
-                        <td className="px-4 py-2 font-bold text-[#003366]">{latest.elective2}</td>
+                        <td className="px-4 py-2 font-bold text-[#003366]">
+                          {latest.elective2}
+                          {latest.elective2Section ? ` — ${latest.elective2Section}` : ''}
+                        </td>
                       </tr>
                     </>
                   )}
@@ -155,6 +168,8 @@ export default function ResultPage() {
                       <tr className="bg-[#e8edf2] text-[#003366]">
                         <th className="border border-gray-300 px-3 py-2 text-left">Selection</th>
                         <th className="border border-gray-300 px-3 py-2 text-left">Selected Name</th>
+                        <th className="border border-gray-300 px-3 py-2 text-left">Numbered Section</th>
+                        <th className="border border-gray-300 px-3 py-2 text-left">Allotment</th>
                         <th className="border border-gray-300 px-3 py-2 text-left">Reaction Time</th>
                         <th className="border border-gray-300 px-3 py-2 text-left">Seats Left</th>
                       </tr>
@@ -170,6 +185,14 @@ export default function ResultPage() {
                                 : 'Elective 2'}
                           </td>
                           <td className="border border-gray-300 px-3 py-2">{selection.value}</td>
+                          <td className="border border-gray-300 px-3 py-2 font-mono">
+                            {selection.numberedSection ?? '—'}
+                          </td>
+                          <td className={`border border-gray-300 px-3 py-2 font-bold ${
+                            selection.randomlyAllotted ? 'text-amber-700' : 'text-green-700'
+                          }`}>
+                            {selection.randomlyAllotted ? 'Randomly allotted' : 'Submitted'}
+                          </td>
                           <td className="border border-gray-300 px-3 py-2 font-mono">
                             {(selection.reactionMs / 1000).toFixed(2)}s
                           </td>

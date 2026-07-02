@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useSimStore, getWindowDuration } from '@/store/simStore';
-import { getSelectionOptions } from '@/lib/sections';
+import { getElectiveNumberedSections, getSelectionOptions } from '@/lib/sections';
 import type { SelectionKind } from '@/lib/sections';
 import ReactionTimer from './ReactionTimer';
 
@@ -35,6 +35,7 @@ export default function SectionModal({
     customWindowTime,
   } = useSimStore();
   const [selected, setSelected] = useState<string | null>(null);
+  const [selectedNumberedSection, setSelectedNumberedSection] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const drainRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const modalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -44,6 +45,11 @@ export default function SectionModal({
 
   const windowDuration = getWindowDuration(difficulty, customWindowTime);
   const options = getSelectionOptions(selectionKind);
+  const isElectiveSelection = selectionKind !== 'section';
+  const numberedSections = selected ? getElectiveNumberedSections(selected) : [];
+  const canSubmit = Boolean(
+    selected && (!isElectiveSelection || selectedNumberedSection)
+  );
 
   // Assign each section a drain rate based on windowDuration
   useEffect(() => {
@@ -103,13 +109,13 @@ export default function SectionModal({
   }, [onMissed, options, windowDuration, windowOpen]);
 
   const handleSubmit = () => {
-    if (!selected || submitted) return;
+    if (!selected || !canSubmit || submitted) return;
     setSubmitted(true);
     submittedRef.current = true;
     clearInterval(drainRef.current!);
     clearTimeout(modalTimerRef.current!);
     if (semester === '5th') {
-      claimFifthSelection(selectionKind, selected);
+      claimFifthSelection(selectionKind, selected, selectedNumberedSection || null);
     } else {
       claimSection(selected, '3rd');
     }
@@ -186,7 +192,10 @@ export default function SectionModal({
                     value={sec.code}
                     disabled={isFull || submitted}
                     checked={selected === sec.code}
-                    onChange={() => setSelected(sec.code)}
+                    onChange={() => {
+                      setSelected(sec.code);
+                      setSelectedNumberedSection('');
+                    }}
                     className="mr-2 accent-blue-700"
                   />
                   {sec.code} ( Available seat -{' '}
@@ -199,6 +208,31 @@ export default function SectionModal({
             })}
             {options.every((sec) => (seatCounts[sec.code] ?? 0) === 0) && (
               <p className="text-xs text-gray-500 text-center py-4">All choices are full.</p>
+            )}
+
+            {isElectiveSelection && selected && numberedSections.length > 0 && (
+              <div className="mt-4 border-t border-[#d0d8e8] pt-3">
+                <label
+                  htmlFor={`${selectionKind}-numbered-section`}
+                  className="block text-xs font-bold text-[#003366] mb-1"
+                >
+                  Select numbered section for {selected}:
+                </label>
+                <select
+                  id={`${selectionKind}-numbered-section`}
+                  value={selectedNumberedSection}
+                  onChange={(event) => setSelectedNumberedSection(event.target.value)}
+                  disabled={submitted}
+                  className="w-full border border-[#8ca5c4] bg-white px-2 py-1.5 text-xs text-[#333] focus:outline-none focus:ring-1 focus:ring-[#3f688e]"
+                >
+                  <option value="">Select a numbered section</option>
+                  {numberedSections.map((numberedSection) => (
+                    <option key={numberedSection} value={numberedSection}>
+                      {numberedSection}
+                    </option>
+                  ))}
+                </select>
+              </div>
             )}
           </form>
         </div>
@@ -216,10 +250,10 @@ export default function SectionModal({
           <div className="flex flex-col items-center w-full mb-1">
             <button
               type="button"
-              disabled={!selected || submitted}
+              disabled={!canSubmit || submitted}
               onClick={handleSubmit}
               className={`flex items-center gap-1 px-4 py-1 text-xs border rounded-sm mb-1 ${
-                selected && !submitted
+                canSubmit && !submitted
                   ? 'bg-gradient-to-b from-white to-[#e3e3e3] border-[#a5a5a5] text-[#333] hover:from-white hover:to-[#eee] cursor-pointer'
                   : 'bg-gray-200 border-gray-300 text-gray-400 cursor-not-allowed'
               }`}
