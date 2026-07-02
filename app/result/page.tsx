@@ -23,6 +23,8 @@ export default function ResultPage() {
   if (!latest) return null;
 
   const missed = latest.section === null;
+  const semester = latest.semester ?? '3rd';
+  const isFifthSemester = semester === '5th';
   const reactionSec = missed ? null : latest.reactionMs / 1000;
   const grade = latest.grade;
 
@@ -56,8 +58,12 @@ export default function ResultPage() {
 
             {/* Page title */}
             <div className="mb-2">
-              <h2 className="text-base font-bold text-[#003366] mb-1">Section Selection Result</h2>
-              <p className="text-xs text-gray-600">Attempt #{latest.attemptNumber} — {latest.difficulty} mode</p>
+              <h2 className="text-base font-bold text-[#003366] mb-1">
+                {isFifthSemester ? 'Section & Elective Selection Result' : 'Section Selection Result'}
+              </h2>
+              <p className="text-xs text-gray-600">
+                Attempt #{latest.attemptNumber} — {semester} Semester — {latest.difficulty} mode
+              </p>
             </div>
 
             {/* Result summary card */}
@@ -77,12 +83,14 @@ export default function ResultPage() {
                       {missed ? (
                         <span className="text-red-700 font-bold">Failed — no section selected in time</span>
                       ) : (
-                        <span className="text-green-700 font-bold">Section Secured</span>
+                        <span className="text-green-700 font-bold">
+                          {isFifthSemester ? 'All selections completed' : 'Section Secured'}
+                        </span>
                       )}
                     </td>
                   </tr>
                   <tr className="bg-[#f7f9fb] border-b border-gray-200">
-                    <td className="px-4 py-2 font-bold text-[#003366]">Section Assigned</td>
+                    <td className="px-4 py-2 font-bold text-[#003366]">Selected Section</td>
                     <td className="px-4 py-2 font-bold">
                       {missed ? (
                         <span className="text-gray-500 italic">Random allocation pending</span>
@@ -91,8 +99,22 @@ export default function ResultPage() {
                       )}
                     </td>
                   </tr>
+                  {isFifthSemester && (
+                    <>
+                      <tr className="border-b border-gray-200">
+                        <td className="px-4 py-2 font-bold text-[#003366]">Elective 1</td>
+                        <td className="px-4 py-2 font-bold text-[#003366]">{latest.elective1}</td>
+                      </tr>
+                      <tr className="bg-[#f7f9fb] border-b border-gray-200">
+                        <td className="px-4 py-2 font-bold text-[#003366]">Elective 2</td>
+                        <td className="px-4 py-2 font-bold text-[#003366]">{latest.elective2}</td>
+                      </tr>
+                    </>
+                  )}
                   <tr className="border-b border-gray-200">
-                    <td className="px-4 py-2 font-bold text-[#003366]">Reaction Time</td>
+                    <td className="px-4 py-2 font-bold text-[#003366]">
+                      {isFifthSemester ? 'Total Reaction Time' : 'Reaction Time'}
+                    </td>
                     <td className="px-4 py-2">
                       {reactionSec !== null ? (
                         <span className={reactionSec < 5 ? 'text-green-700 font-bold' : reactionSec < 10 ? 'text-amber-700 font-bold' : 'text-red-700 font-bold'}>
@@ -108,7 +130,7 @@ export default function ResultPage() {
                     <td className={`px-4 py-2 font-bold ${GRADE_COLOR[grade]}`}>{grade}</td>
                   </tr>
                   <tr className="border-b border-gray-200">
-                    <td className="px-4 py-2 font-bold text-[#003366]">Seats Left When Claimed</td>
+                    <td className="px-4 py-2 font-bold text-[#003366]">Section Seats Left When Claimed</td>
                     <td className="px-4 py-2 font-bold text-blue-700">
                       {missed ? <span className="text-gray-400">—</span> : latest.seatsAtClaim}
                     </td>
@@ -121,6 +143,44 @@ export default function ResultPage() {
               </table>
               </div>
             </div>
+
+            {isFifthSemester && latest.selectionDetails && (
+              <div className="bg-white border border-gray-300 rounded-sm shadow-sm overflow-hidden">
+                <div className="px-4 py-2 font-bold text-white text-xs" style={{ background: '#3f688e' }}>
+                  Selection Details
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[620px] text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-[#e8edf2] text-[#003366]">
+                        <th className="border border-gray-300 px-3 py-2 text-left">Selection</th>
+                        <th className="border border-gray-300 px-3 py-2 text-left">Selected Name</th>
+                        <th className="border border-gray-300 px-3 py-2 text-left">Reaction Time</th>
+                        <th className="border border-gray-300 px-3 py-2 text-left">Seats Left</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {latest.selectionDetails.map((selection, index) => (
+                        <tr key={selection.kind} className={index % 2 === 0 ? 'bg-white' : 'bg-[#f7f9fb]'}>
+                          <td className="border border-gray-300 px-3 py-2 font-bold text-[#003366]">
+                            {selection.kind === 'section'
+                              ? 'Section'
+                              : selection.kind === 'elective1'
+                                ? 'Elective 1'
+                                : 'Elective 2'}
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2">{selection.value}</td>
+                          <td className="border border-gray-300 px-3 py-2 font-mono">
+                            {(selection.reactionMs / 1000).toFixed(2)}s
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2">{selection.seatsAtClaim}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             {/* Stats row */}
             <div className="grid grid-cols-3 gap-2 md:gap-4">

@@ -1,6 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
-import { Attempt } from '@/store/simStore';
+import type { Attempt } from '@/store/simStore';
 import { GRADE_COLOR } from '@/lib/grading';
 
 interface AttemptHistoryTableProps {
@@ -35,6 +35,9 @@ export default function AttemptHistoryTable({ attempts }: AttemptHistoryTablePro
           <tr className="bg-[#3f688e] text-white">
             <th className="px-2 py-1 text-left">#</th>
             <th className="px-2 py-1 text-left">Section</th>
+            <th className="px-2 py-1 text-left">Semester</th>
+            <th className="px-2 py-1 text-left">Elective 1</th>
+            <th className="px-2 py-1 text-left">Elective 2</th>
             <th className="px-2 py-1 text-left font-mono">Time</th>
             <th className="px-2 py-1 text-left">Grade</th>
             <th className="px-2 py-1 text-left">Seats left</th>
@@ -60,6 +63,9 @@ export default function AttemptHistoryTable({ attempts }: AttemptHistoryTablePro
                 <td className="px-2 py-1 font-semibold">
                   {a.section ?? <span className="text-red-500">Missed</span>}
                 </td>
+                <td className="px-2 py-1 whitespace-nowrap">{a.semester ?? '3rd'}</td>
+                <td className="px-2 py-1 min-w-40">{a.elective1 ?? '—'}</td>
+                <td className="px-2 py-1 min-w-40">{a.elective2 ?? '—'}</td>
                 <td className="px-2 py-1 font-mono tabular-nums">
                   {a.section ? (a.reactionMs / 1000).toFixed(2) + 's' : '—'}
                 </td>

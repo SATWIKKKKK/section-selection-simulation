@@ -2,35 +2,59 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useSimStore, getWindowDuration } from '@/store/simStore';
-import { SECTIONS } from '@/lib/sections';
+import { getSelectionOptions } from '@/lib/sections';
+import type { SelectionKind } from '@/lib/sections';
 import ReactionTimer from './ReactionTimer';
 
 interface SectionModalProps {
   semester?: string;
+  selectionKind?: SelectionKind;
   onClose: () => void;
   onMissed: () => void;
 }
 
-export default function SectionModal({ semester, onClose, onMissed }: SectionModalProps) {
-  const { seatCounts, claimSection, windowOpen, windowStartTime, difficulty, customWindowTime } = useSimStore();
+const SELECTION_TITLES: Record<SelectionKind, string> = {
+  section: 'Select Faculty / Section',
+  elective1: 'Elective 1 Selection',
+  elective2: 'Elective 2 Selection',
+};
+
+export default function SectionModal({
+  semester,
+  selectionKind = 'section',
+  onClose,
+  onMissed,
+}: SectionModalProps) {
+  const {
+    seatCounts,
+    claimSection,
+    claimFifthSelection,
+    windowOpen,
+    windowStartTime,
+    difficulty,
+    customWindowTime,
+  } = useSimStore();
   const [selected, setSelected] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const drainRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const modalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const missedDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const drainRates = useRef<Record<string, number>>({});
+  const submittedRef = useRef(false);
 
   const windowDuration = getWindowDuration(difficulty, customWindowTime);
+  const options = getSelectionOptions(selectionKind);
 
   // Assign each section a drain rate based on windowDuration
   useEffect(() => {
     // Want seats to drain 1.5 to 2.5 seconds before window closes
     const drainTime = Math.max(1, windowDuration - 2);
-    SECTIONS.forEach((sec) => {
+    options.forEach((sec) => {
       const seats = sec.seats || 78;
       // Add slight randomness to rates
       drainRates.current[sec.code] = Math.max(1, Math.ceil((seats / drainTime) * (0.8 + Math.random() * 0.4)));
     });
-  }, [windowDuration]);
+  }, [options, windowDuration]);
 
   // Bot drain logic — drain ALL sections each second
   useEffect(() => {
@@ -38,12 +62,12 @@ export default function SectionModal({ semester, onClose, onMissed }: SectionMod
 
     drainRef.current = setInterval(() => {
       const store = useSimStore.getState();
-      if (store.selectedSection) {
+      if (submittedRef.current) {
         clearInterval(drainRef.current!);
         return;
       }
       const drainAmounts: Record<string, number> = {};
-      SECTIONS.forEach((sec) => {
+      options.forEach((sec) => {
         const current = store.seatCounts[sec.code] ?? 0;
         if (current > 0) {
           drainAmounts[sec.code] = drainRates.current[sec.code] ?? 8;
@@ -59,13 +83,13 @@ export default function SectionModal({ semester, onClose, onMissed }: SectionMod
       clearInterval(drainRef.current!);
       // Force all seats to 0
       const drainAmounts: Record<string, number> = {};
-      SECTIONS.forEach((sec) => {
+      options.forEach((sec) => {
         drainAmounts[sec.code] = 999;
       });
       useSimStore.getState().drainAllSeats(drainAmounts);
       // Small delay so UI shows all-zero before popup
-      setTimeout(() => {
-        if (!useSimStore.getState().selectedSection) {
+      missedDelayRef.current = setTimeout(() => {
+        if (!submittedRef.current) {
           onMissed();
         }
       }, 300);
@@ -74,16 +98,21 @@ export default function SectionModal({ semester, onClose, onMissed }: SectionMod
     return () => {
       if (drainRef.current) clearInterval(drainRef.current);
       if (modalTimerRef.current) clearTimeout(modalTimerRef.current);
+      if (missedDelayRef.current) clearTimeout(missedDelayRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowOpen, windowDuration]);
+  }, [onMissed, options, windowDuration, windowOpen]);
 
   const handleSubmit = () => {
     if (!selected || submitted) return;
     setSubmitted(true);
+    submittedRef.current = true;
     clearInterval(drainRef.current!);
     clearTimeout(modalTimerRef.current!);
-    claimSection(selected);
+    if (semester === '5th') {
+      claimFifthSelection(selectionKind, selected);
+    } else {
+      claimSection(selected, '3rd');
+    }
   };
 
   return (
@@ -102,6 +131,7 @@ export default function SectionModal({ semester, onClose, onMissed }: SectionMod
           boxShadow: '2px 2px 5px rgba(0,0,0,0.3)',
         }}
         role="dialog"
+        aria-modal="true"
         aria-labelledby="modal-title"
       >
         {/* Window Header */}
@@ -110,7 +140,7 @@ export default function SectionModal({ semester, onClose, onMissed }: SectionMod
           className="flex justify-between items-center px-2 py-1 font-bold text-white text-xs"
           style={{ background: 'linear-gradient(to bottom, #10638e, #0d4d70)' }}
         >
-          <span>Select Faculty / Section{semester ? ` — ${semester} Semester` : ''}</span>
+          <span>{SELECTION_TITLES[selectionKind]}{semester ? ` — ${semester} Semester` : ''}</span>
           <div className="flex items-center gap-2">
             <ReactionTimer windowStartTime={windowStartTime} />
             <div className="flex gap-1">
@@ -137,8 +167,8 @@ export default function SectionModal({ semester, onClose, onMissed }: SectionMod
             borderBottom: '1px solid #d0d8e8',
           }}
         >
-          <form id="section-form">
-            {SECTIONS.map((sec) => {
+          <form id={`${selectionKind}-selection-form`}>
+            {options.map((sec) => {
               const seats = seatCounts[sec.code] ?? 78;
               const isFull = seats === 0;
               if (isFull) return null; // hide sections with 0 seats
@@ -152,7 +182,7 @@ export default function SectionModal({ semester, onClose, onMissed }: SectionMod
                 >
                   <input
                     type="radio"
-                    name="faculty_section"
+                    name={`${selectionKind}_choice`}
                     value={sec.code}
                     disabled={isFull || submitted}
                     checked={selected === sec.code}
@@ -167,8 +197,8 @@ export default function SectionModal({ semester, onClose, onMissed }: SectionMod
                 </label>
               );
             })}
-            {SECTIONS.every((sec) => (seatCounts[sec.code] ?? 0) === 0) && (
-              <p className="text-xs text-gray-500 text-center py-4">All sections are full.</p>
+            {options.every((sec) => (seatCounts[sec.code] ?? 0) === 0) && (
+              <p className="text-xs text-gray-500 text-center py-4">All choices are full.</p>
             )}
           </form>
         </div>

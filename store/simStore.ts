@@ -1,7 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { SECTIONS } from '@/lib/sections';
-import { computeGrade, Grade } from '@/lib/grading';
+import { getSelectionOptions, SECTIONS } from '@/lib/sections';
+import type { SelectionKind } from '@/lib/sections';
+import { computeGrade } from '@/lib/grading';
+import type { Grade } from '@/lib/grading';
+
+export interface SelectionDetail {
+  kind: SelectionKind;
+  value: string;
+  reactionMs: number;
+  seatsAtClaim: number;
+}
 
 export interface Attempt {
   id: string;
@@ -12,6 +21,10 @@ export interface Attempt {
   grade: Grade;
   difficulty: string;
   timestamp: number;
+  semester?: '3rd' | '5th';
+  elective1?: string | null;
+  elective2?: string | null;
+  selectionDetails?: SelectionDetail[];
 }
 
 export type Difficulty = 'easy' | 'normal' | 'hard' | 'custom';
@@ -30,6 +43,9 @@ interface SimState {
   windowStartTime: number | null;
   seatCounts: Record<string, number>;
   selectedSection: string | null;
+  selectedElective1: string | null;
+  selectedElective2: string | null;
+  selectionDetails: SelectionDetail[];
   claimTime: number | null;
   seatsAtClaim: number;
 
@@ -42,10 +58,13 @@ interface SimState {
   setCustomWindowTime: (time: number) => void;
   logout: () => void;
   initSeats: () => void;
+  initSelection: (kind: SelectionKind) => void;
   openWindow: () => void;
+  closeWindow: () => void;
   drainSeat: (section: string, amount: number) => void;
   drainAllSeats: (drainAmounts: Record<string, number>) => void;
-  claimSection: (section: string) => void;
+  claimSection: (section: string, semester?: '3rd' | '5th') => void;
+  claimFifthSelection: (kind: SelectionKind, value: string) => void;
   missedWindow: () => void;
   resetRound: () => void;
   clearHistory: () => void;
@@ -62,6 +81,9 @@ export const useSimStore = create<SimState>()(
       windowStartTime: null,
       seatCounts: {},
       selectedSection: null,
+      selectedElective1: null,
+      selectedElective2: null,
+      selectionDetails: [],
       claimTime: null,
       seatsAtClaim: 0,
       attempts: [],
@@ -80,7 +102,17 @@ export const useSimStore = create<SimState>()(
         set({ seatCounts: counts });
       },
 
+      initSelection: (kind) => {
+        const counts: Record<string, number> = {};
+        getSelectionOptions(kind).forEach((option) => {
+          counts[option.code] = option.seats;
+        });
+        set({ seatCounts: counts });
+      },
+
       openWindow: () => set({ windowOpen: true, windowStartTime: Date.now() }),
+
+      closeWindow: () => set({ windowOpen: false, windowStartTime: null, seatCounts: {} }),
 
       drainSeat: (section, amount) =>
         set((s) => {
@@ -103,11 +135,17 @@ export const useSimStore = create<SimState>()(
           return { seatCounts: newCounts };
         }),
 
-      claimSection: (section) => {
+      claimSection: (section, semester = '3rd') => {
         const { windowStartTime, seatCounts, difficulty, attempts } = get();
         const reactionMs = windowStartTime ? Date.now() - windowStartTime : 0;
         const seatsLeft = seatCounts[section] ?? 0;
         const grade = computeGrade(reactionMs, false);
+        const detail: SelectionDetail = {
+          kind: 'section',
+          value: section,
+          reactionMs,
+          seatsAtClaim: seatsLeft,
+        };
         const attempt: Attempt = {
           id: Math.random().toString(36).slice(2),
           attemptNumber: attempts.length + 1,
@@ -117,13 +155,87 @@ export const useSimStore = create<SimState>()(
           grade,
           difficulty,
           timestamp: Date.now(),
+          semester,
+          elective1: null,
+          elective2: null,
+          selectionDetails: [detail],
         };
         set({
           selectedSection: section,
+          selectionDetails: [detail],
           claimTime: reactionMs,
           seatsAtClaim: seatsLeft,
           windowOpen: false,
           attempts: [...attempts, attempt],
+        });
+      },
+
+      claimFifthSelection: (kind, value) => {
+        const state = get();
+        const reactionMs = state.windowStartTime ? Date.now() - state.windowStartTime : 0;
+        const seatsLeft = state.seatCounts[value] ?? 0;
+        const detail: SelectionDetail = {
+          kind,
+          value,
+          reactionMs,
+          seatsAtClaim: seatsLeft,
+        };
+
+        if (kind === 'section') {
+          set({
+            selectedSection: value,
+            selectionDetails: [detail],
+            claimTime: reactionMs,
+            seatsAtClaim: seatsLeft,
+            windowOpen: false,
+          });
+          return;
+        }
+
+        if (kind === 'elective1') {
+          if (!state.selectedSection) return;
+          set({
+            selectedElective1: value,
+            selectionDetails: [
+              ...state.selectionDetails.filter((selection) => selection.kind !== 'elective1'),
+              detail,
+            ],
+            windowOpen: false,
+          });
+          return;
+        }
+
+        if (!state.selectedSection || !state.selectedElective1) return;
+
+        const completedSelections = [
+          ...state.selectionDetails.filter((selection) => selection.kind !== 'elective2'),
+          detail,
+        ];
+        const totalReactionMs = completedSelections.reduce(
+          (total, selection) => total + selection.reactionMs,
+          0
+        );
+        const attempt: Attempt = {
+          id: Math.random().toString(36).slice(2),
+          attemptNumber: state.attempts.length + 1,
+          section: state.selectedSection,
+          elective1: state.selectedElective1,
+          elective2: value,
+          reactionMs: totalReactionMs,
+          seatsAtClaim:
+            completedSelections.find((selection) => selection.kind === 'section')?.seatsAtClaim ?? 0,
+          grade: computeGrade(totalReactionMs, false),
+          difficulty: state.difficulty,
+          timestamp: Date.now(),
+          semester: '5th',
+          selectionDetails: completedSelections,
+        };
+
+        set({
+          selectedElective2: value,
+          selectionDetails: completedSelections,
+          windowOpen: false,
+          attempts: [...state.attempts, attempt],
         });
       },
 
@@ -138,6 +250,10 @@ export const useSimStore = create<SimState>()(
           grade: 'X',
           difficulty,
           timestamp: Date.now(),
+          semester: '3rd',
+          elective1: null,
+          elective2: null,
+          selectionDetails: [],
         };
         set({ windowOpen: false, attempts: [...attempts, attempt] });
       },
@@ -148,6 +264,9 @@ export const useSimStore = create<SimState>()(
           windowStartTime: null,
           seatCounts: {},
           selectedSection: null,
+          selectedElective1: null,
+          selectedElective2: null,
+          selectionDetails: [],
           claimTime: null,
           seatsAtClaim: 0,
         }),

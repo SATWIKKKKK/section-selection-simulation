@@ -46,7 +46,7 @@ components/
   ResultChart.tsx                 Visual chart of attempt history
 
 lib/
-  sections.ts                     54 sections (CSE-01 to CSE-54), each with 78 seats and a faculty name
+  sections.ts                     61 sections plus the 5th-semester Elective 1 and Elective 2 option lists
   grading.ts                      Grade computation logic based on reaction time
 
 store/
@@ -90,14 +90,13 @@ This is the core of the simulator. The flow is:
 
 1. **Adjust difficulty** (optional): Use the settings panel at the top to select Easy, Normal, Hard, or Custom before choosing a semester. This sets the length of the selection window.
 2. **Choose semester**: Select 3rd or 5th semester.
-3. **Pre-open countdown**: A 10-second animated countdown begins, simulating the wait before the window opens.
-4. **Selection window opens**: The section modal appears. You have a limited number of seconds (based on difficulty) to:
-   - Browse the list of 54 sections (CSE-01 to CSE-54)
-   - See live seat counts draining in real-time (bot simulation)
-   - Click a section to select it, then click Submit
-5. **Outcome**:
-   - If submitted in time: you are taken to the Result page with your reaction time and grade.
-   - If time runs out: a popup informs you that a random section will be assigned, then takes you to the Result page.
+3. **3rd semester**: The original 10-second countdown runs, then the timed section popup opens automatically with CSE-01 through CSE-61.
+4. **5th semester**: A subject table is shown and no popup opens automatically. The student clicks each enabled `Click Here` button to complete, in order:
+   - Section selection from 61 sections
+   - Elective 1 from High Performance Computing or Distributed Operating Systems
+   - Elective 2 from Compiler, Data Mining & Data Warehousing, Privacy and Security in IoT, or Computational Intelligence
+5. **Timing and gating**: Every clicked selection receives the configured difficulty duration. Elective 1 unlocks only after the section is submitted, and Elective 2 unlocks only after Elective 1 is submitted.
+6. **Outcome**: The 5th-semester flow redirects to the Result page only after all three selections are complete, where every choice and individual reaction time is displayed.
 
 ### 5. Result (`/result`)
 
@@ -146,7 +145,7 @@ Grades are based on how quickly you submit after the window opens:
 
 ## Seat Drain Simulation
 
-Inside the selection window, all 54 sections start with 78 seats each. A bot drain algorithm runs every second and reduces seats across all sections simultaneously, simulating other students claiming seats. The drain rate is calibrated so that most sections reach 0 seats roughly 1.5 to 2.5 seconds before the window closes, matching real-world conditions. This means pre-scrolling to your target section and acting quickly is essential.
+Inside each selection window, all available choices start with 78 seats. The section popup contains 61 sections (CSE-01 through CSE-61), while the elective popups contain their subject-specific choices. A bot drain algorithm runs every second and reduces seats across the active choices simultaneously, simulating other students claiming seats.
 
 ---
 
