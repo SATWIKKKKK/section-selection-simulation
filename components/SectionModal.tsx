@@ -37,6 +37,9 @@ export default function SectionModal({
   const [selected, setSelected] = useState<string | null>(null);
   const [selectedNumberedSection, setSelectedNumberedSection] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [hasReachedLastSection, setHasReachedLastSection] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const lastOptionRef = useRef<HTMLLabelElement | null>(null);
   const drainRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const modalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const missedDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -46,10 +49,40 @@ export default function SectionModal({
   const windowDuration = getWindowDuration(difficulty, customWindowTime);
   const options = getSelectionOptions(selectionKind);
   const isElectiveSelection = selectionKind !== 'section';
+  const requiresLastSectionReach = semester === '3rd' && selectionKind === 'section';
+  const lastOptionCode = options[options.length - 1]?.code;
   const numberedSections = selected ? getElectiveNumberedSections(selected) : [];
   const canSubmit = Boolean(
-    selected && (!isElectiveSelection || selectedNumberedSection)
+    selected &&
+      (!isElectiveSelection || selectedNumberedSection) &&
+      (!requiresLastSectionReach || hasReachedLastSection)
   );
+
+  const markLastSectionReachedIfVisible = () => {
+    if (!requiresLastSectionReach) return;
+
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const lastOption = lastOptionRef.current;
+    const reachedBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 2;
+    const lastOptionVisible = lastOption
+      ? lastOption.getBoundingClientRect().bottom <= container.getBoundingClientRect().bottom + 2
+      : false;
+
+    if (reachedBottom || lastOptionVisible) {
+      setHasReachedLastSection(true);
+    }
+  };
+
+  const handleOptionChange = (code: string) => {
+    setSelected(code);
+    setSelectedNumberedSection('');
+
+    if (!requiresLastSectionReach) return;
+
+    setHasReachedLastSection(false);
+  };
 
   // Assign each section a drain rate based on windowDuration
   useEffect(() => {
@@ -165,6 +198,8 @@ export default function SectionModal({
 
         {/* Scrollable list */}
         <div
+          ref={scrollContainerRef}
+          onScroll={markLastSectionReachedIfVisible}
           className="bg-white border-l border-r border-[#8ca5c4]"
           style={{
             height: 320,
@@ -181,6 +216,7 @@ export default function SectionModal({
               return (
                 <label
                   key={sec.code}
+                  ref={sec.code === lastOptionCode ? lastOptionRef : undefined}
                   className={`flex items-center mb-1.5 text-xs cursor-pointer select-none ${
                     isFull ? 'pointer-events-none text-gray-400 line-through' : 'text-[#444] hover:text-black'
                   } ${selected === sec.code ? 'font-bold text-blue-700' : ''}`}
@@ -192,10 +228,7 @@ export default function SectionModal({
                     value={sec.code}
                     disabled={isFull || submitted}
                     checked={selected === sec.code}
-                    onChange={() => {
-                      setSelected(sec.code);
-                      setSelectedNumberedSection('');
-                    }}
+                    onChange={() => handleOptionChange(sec.code)}
                     className="mr-2 accent-blue-700"
                   />
                   {sec.code} ( Available seat -{' '}

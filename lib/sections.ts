@@ -21,7 +21,7 @@ const facultyNames = [
   'Prof. P. Satpathy', 'Prof. B. Prusty', 'Prof. A. Lenka',
 ];
 
-export const SECTIONS: Section[] = Array.from({ length: 61 }, (_, i) => ({
+export const SECTIONS: Section[] = Array.from({ length: 49 }, (_, i) => ({
   code: `CSE-${String(i + 1).padStart(2, '0')}`,
   seats: 78,
   facultyName: facultyNames[i % facultyNames.length],

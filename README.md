@@ -46,7 +46,7 @@ components/
   ResultChart.tsx                 Visual chart of attempt history
 
 lib/
-  sections.ts                     61 sections plus the 5th-semester Elective 1 and Elective 2 option lists
+  sections.ts                     49 sections plus the 5th-semester Elective 1 and Elective 2 option lists
   grading.ts                      Grade computation logic based on reaction time
 
 store/
@@ -90,9 +90,9 @@ This is the core of the simulator. The flow is:
 
 1. **Adjust difficulty** (optional): Use the settings panel at the top to select Easy, Normal, Hard, or Custom before choosing a semester. This sets the length of the selection window.
 2. **Choose semester**: Select 3rd or 5th semester.
-3. **3rd semester**: The original 10-second countdown runs, then the timed section popup opens automatically with CSE-01 through CSE-61.
+3. **3rd semester**: The original 10-second countdown runs, then the timed section popup opens automatically with CSE-01 through CSE-49.
 4. **5th semester**: A subject table is shown and no popup opens automatically. The student clicks each enabled `Click Here` button to complete, in order:
-   - Section selection from 61 sections
+   - Section selection from 49 sections
    - Elective 1 from High Performance Computing or Distributed Operating Systems
    - Elective 2 from Compiler Design, Data Mining & Data Warehousing, Privacy and Security in IoT, or Computational Intelligence
 5. **Optional opening mode**: Choose Instant Mode or Opening Wait Simulation. Waiting mode supports 1, 2, 5, or custom minutes, stores an absolute opening timestamp in the tab session, and keeps every `Click Here` action hidden until the countdown ends.
@@ -148,7 +148,7 @@ Grades are based on how quickly you submit after the window opens:
 
 ## Seat Drain Simulation
 
-Inside each selection window, all available choices start with 78 seats. The section popup contains 61 sections (CSE-01 through CSE-61), while the elective popups contain their subject-specific choices. A bot drain algorithm runs every second and reduces seats across the active choices simultaneously, simulating other students claiming seats.
+Inside each selection window, all available choices start with 78 seats. The section popup contains 49 sections (CSE-01 through CSE-49), while the elective popups contain their subject-specific choices. A bot drain algorithm runs every second and reduces seats across the active choices simultaneously, simulating other students claiming seats.
 
 ---
 
